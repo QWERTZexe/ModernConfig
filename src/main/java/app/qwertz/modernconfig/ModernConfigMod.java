@@ -1,6 +1,7 @@
 package app.qwertz.modernconfig;
 
 import app.qwertz.modernconfig.config.ConfigManager;
+import app.qwertz.modernconfig.config.ModernConfig;
 import app.qwertz.modernconfig.ui.ConfigScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -25,12 +26,9 @@ public class ModernConfigMod implements ClientModInitializer {
         // Register tick event for keybind
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (configKeyBinding.wasPressed()) {
-                openGlobalConfig();
+                ModernConfig.openGlobalConfig();
             }
         });
     }
 
-    public static void openGlobalConfig() {
-        MinecraftClient.getInstance().setScreen(new ConfigScreen());
     }
-} 

@@ -7,6 +7,8 @@ import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +99,10 @@ public class ConfigScreen extends Screen {
             return Text.literal("ModernConfig Settings");
         }
         if (currentPath.isEmpty()) {
+            ConfigManager.ModInfo modInfo = ConfigManager.getModInfo(modId);
+            if (modInfo != null) {
+                return Text.literal(modInfo.getName() + " Configuration");
+            }
             return Text.literal(formatModName(modId) + " Configuration");
         }
         return Text.literal(formatCategoryName(currentPath.get(currentPath.size() - 1)));
@@ -105,12 +111,28 @@ public class ConfigScreen extends Screen {
     private void addModListToContainer(ModernContainer container, int width) {
         for (Map.Entry<String, Map<String, Object>> entry : ConfigManager.getAllConfigs().entrySet()) {
             String modId = entry.getKey();
-            ModernCategory modButton = new ModernCategory(
-                0, 0, width - 24, 60,
-                Text.literal(formatModName(modId)),
-                Text.literal("Configure " + formatModName(modId)),
-                button -> MinecraftClient.getInstance().setScreen(new ConfigScreen(modId))
-            );
+            ConfigManager.ModInfo modInfo = ConfigManager.getModInfo(modId);
+            
+            String displayName = modInfo != null ? modInfo.getName() : formatModName(modId);
+            String description = modInfo != null ? modInfo.getDescription() : "Configure " + formatModName(modId);
+            
+            ModernCategory modButton;
+            if (modInfo != null && modInfo.getIcon() != null) {
+                modButton = new ModernCategory(
+                    0, 0, width - 24, 60,
+                    Text.literal(displayName),
+                    Text.literal(description),
+                    modInfo.getIcon(),
+                    button -> MinecraftClient.getInstance().setScreen(new ConfigScreen(modId))
+                );
+            } else {
+                modButton = new ModernCategory(
+                    0, 0, width - 24, 60,
+                    Text.literal(displayName),
+                    Text.literal(description),
+                    button -> MinecraftClient.getInstance().setScreen(new ConfigScreen(modId))
+                );
+            }
             container.addElement(modButton, new ModernContainer.LayoutOptions().setFullWidth(true));
         }
     }

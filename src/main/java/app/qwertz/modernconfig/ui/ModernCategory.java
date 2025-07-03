@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
@@ -7,6 +8,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.util.Identifier;
 import app.qwertz.modernconfig.config.ConfigOption;
 
 import java.util.ArrayList;
@@ -15,6 +18,7 @@ import java.util.function.Consumer;
 
 public class ModernCategory extends ClickableWidget {
     private final Text description;
+    private final Identifier icon;
     private final List<Object> elements = new ArrayList<>(); // Can contain ConfigOption<?> or ModernCategory
     private float hoverProgress = 0.0f;
     private float arrowAnimProgress = 0.0f;
@@ -25,6 +29,14 @@ public class ModernCategory extends ClickableWidget {
     public ModernCategory(int x, int y, int width, int height, Text title, Text description, Consumer<ModernCategory> onClick) {
         super(x, y, width, height, title);
         this.description = description;
+        this.icon = null;
+        this.onClick = onClick;
+    }
+
+    public ModernCategory(int x, int y, int width, int height, Text title, Text description, Identifier icon, Consumer<ModernCategory> onClick) {
+        super(x, y, width, height, title);
+        this.description = description;
+        this.icon = icon;
         this.onClick = onClick;
     }
 
@@ -94,15 +106,36 @@ public class ModernCategory extends ClickableWidget {
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
 
+        // Calculate text start position considering icon
+        int textStartX = getX() + 16;
+        int descStartX = getX() + 16;
+        if (icon != null) {
+            textStartX += 42; // Make room for icon
+            descStartX += 42;
+        }
+
         // Title in white
         int titleColor = 0xFFFFFFFF; // Pure white, no hover interpolation
         int titleY = getY() + 8; // Moved up slightly
-        context.drawTextWithShadow(textRenderer, getMessage(), getX() + 16, titleY, titleColor);
+      //  if (icon != null) {
+        //    titleY = titleY + 8;
+      //  }
+        context.drawTextWithShadow(textRenderer, getMessage(), textStartX, titleY, titleColor);
+
+        // Draw icon if present
+        if (icon != null) {
+            int iconSize = 48;
+            int iconX = getX() + 6;
+            int iconY = getY() + 6; // + (height - iconSize);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0.0f, 0.0f, iconSize, iconSize, iconSize, iconSize);
+        }
 
         // Description in light grey
         int descriptionColor = 0xFFAAAAAA; // Light grey, no hover interpolation
         int descriptionY = titleY + textRenderer.fontHeight + 2; // Closer to title
-        
+     //   if (icon != null) {
+     //       descriptionY = descriptionY + 12;
+     //   }
         // Wrap description text if too long
         String descText = description.getString();
         int maxDescWidth = width - 60; // More space for text, arrow is at the right
@@ -113,7 +146,7 @@ public class ModernCategory extends ClickableWidget {
             descText += "...";
         }
         
-        context.drawTextWithShadow(textRenderer, descText, getX() + 16, descriptionY, descriptionColor);
+        context.drawTextWithShadow(textRenderer, descText, descStartX, descriptionY, descriptionColor);
 
         // Count items in category (moved to right side near arrow)
         int itemCount = elements.size();

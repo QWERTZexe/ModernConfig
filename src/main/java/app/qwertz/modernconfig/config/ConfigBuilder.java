@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.config;
 
+import net.minecraft.util.Identifier;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -10,20 +11,26 @@ public class ConfigBuilder {
     private final String name;
     private final String description;
     private final String id;
+    private final Identifier icon;
 
-    private ConfigBuilder(String id, String name, String description, ConfigBuilder parent) {
+    private ConfigBuilder(String id, String name, String description, Identifier icon, ConfigBuilder parent) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.icon = icon;
         this.parent = parent;
     }
 
     public static ConfigBuilder create(String name, String description) {
-        return new ConfigBuilder(name.toLowerCase(), name, description, null);
+        return new ConfigBuilder(name.toLowerCase(), name, description, null, null);
+    }
+
+    public static ConfigBuilder create(String name, String description, Identifier icon) {
+        return new ConfigBuilder(name.toLowerCase(), name, description, icon, null);
     }
 
     public ConfigBuilder category(String id, String displayName, String description) {
-        return new ConfigBuilder(id, displayName, description, this);
+        return new ConfigBuilder(id, displayName, description, null, this);
     }
 
     public ConfigBuilder category(String id, String displayName, String description, Consumer<ConfigBuilder> builder) {
@@ -72,10 +79,21 @@ public class ConfigBuilder {
         return this;
     }
 
-    public Map<String, Object> build() {
+    public Map<String, Object> buildRaw() {
         if (parent != null) {
             throw new IllegalStateException("build() can only be called on the root builder. Use end() to finish a category.");
         }
         return options;
+    }
+
+    public ModernConfig build() {
+        if (parent != null) {
+            throw new IllegalStateException("buildConfig() can only be called on the root builder. Use end() to finish a category.");
+        }
+        return ModernConfig.create(id, name, description, icon, options);
+    }
+
+    public Identifier getIcon() {
+        return icon;
     }
 }

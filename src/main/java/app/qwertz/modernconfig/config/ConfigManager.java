@@ -1,6 +1,7 @@
 package app.qwertz.modernconfig.config;
 
 import com.google.gson.*;
+import net.minecraft.util.Identifier;
 import java.io.*;
 import java.nio.file.*;
 import java.util.Map;
@@ -9,7 +10,39 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ConfigManager {
+    // Inner class to store mod metadata
+    public static class ModInfo {
+        private final String name;
+        private final String description;
+        private final Identifier icon;
+        
+        public ModInfo(String name, String description) {
+            this.name = name;
+            this.description = description;
+            this.icon = null;
+        }
+        
+        public ModInfo(String name, String description, Identifier icon) {
+            this.name = name;
+            this.description = description;
+            this.icon = icon;
+        }
+        
+        public String getName() {
+            return name;
+        }
+        
+        public String getDescription() {
+            return description;
+        }
+        
+        public Identifier getIcon() {
+            return icon;
+        }
+    }
+    
     private static final Map<String, Map<String, Object>> MOD_CONFIGS = new HashMap<>();
+    private static final Map<String, ModInfo> MOD_INFO = new HashMap<>();
     private static final Map<String, String> CONFIG_PATHS = new HashMap<>();
     private static final Map<String, ModernConfig> MOD_CONFIG_INSTANCES = new HashMap<>();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -17,6 +50,22 @@ public class ConfigManager {
     public static void registerConfig(String modId, Map<String, Object> config) {
         modId = modId.toLowerCase();
         MOD_CONFIGS.put(modId, config);
+        CONFIG_PATHS.put(modId, "config/" + modId + ".json");
+        load();
+    }
+
+    public static void registerConfig(String modId, String name, String description, Map<String, Object> config) {
+        modId = modId.toLowerCase();
+        MOD_CONFIGS.put(modId, config);
+        MOD_INFO.put(modId, new ModInfo(name, description));
+        CONFIG_PATHS.put(modId, "config/" + modId + ".json");
+        load();
+    }
+
+    public static void registerConfig(String modId, String name, String description, Identifier icon, Map<String, Object> config) {
+        modId = modId.toLowerCase();
+        MOD_CONFIGS.put(modId, config);
+        MOD_INFO.put(modId, new ModInfo(name, description, icon));
         CONFIG_PATHS.put(modId, "config/" + modId + ".json");
         load();
     }
@@ -159,6 +208,11 @@ public class ConfigManager {
         return MOD_CONFIGS.get(modId.toLowerCase());
     }
 
+    public static ModInfo getModInfo(String modId) {
+        modId = modId.toLowerCase();
+        return MOD_INFO.get(modId);
+    }
+
     public static ModernConfig getModConfig(String modId) {
         modId = modId.toLowerCase();
         ModernConfig config = MOD_CONFIG_INSTANCES.get(modId);
@@ -180,4 +234,5 @@ public class ConfigManager {
         ModernConfig config = getModConfig(modId);
         return config != null ? config.getOption(category, option) : null;
     }
+
 }

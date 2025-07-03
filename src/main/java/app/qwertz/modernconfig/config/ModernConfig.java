@@ -2,6 +2,7 @@ package app.qwertz.modernconfig.config;
 
 import app.qwertz.modernconfig.ui.ConfigScreen;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.Identifier;
 
 import java.util.Map;
 import java.util.ArrayList;
@@ -19,6 +20,16 @@ public class ModernConfig {
 
     public static ModernConfig create(String modId, Map<String, Object> config) {
         ConfigManager.registerConfig(modId, config);
+        return ConfigManager.getModConfig(modId);
+    }
+
+    public static ModernConfig create(String modId, String name, String description, Map<String, Object> config) {
+        ConfigManager.registerConfig(modId, name, description, config);
+        return ConfigManager.getModConfig(modId);
+    }
+
+    public static ModernConfig create(String modId, String name, String description, Identifier icon, Map<String, Object> config) {
+        ConfigManager.registerConfig(modId, name, description, icon, config);
         return ConfigManager.getModConfig(modId);
     }
 
@@ -72,4 +83,8 @@ public class ModernConfig {
         ConfigManager.save();
         notifySaveListeners();
     }
+    public static void openGlobalConfig() {
+        MinecraftClient.getInstance().setScreen(new ConfigScreen());
+    }
+
 } 
