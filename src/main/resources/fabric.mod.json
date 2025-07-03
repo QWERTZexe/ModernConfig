@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "modernconfig",
+  "version": "${version}",
+  "name": "ModernConfig",
+  "description": "Beautiful Modern Configuration Library",
+  "authors": ["QWERTZ_EXE"],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/modernconfig/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "app.qwertz.modernconfig.ModernConfigMod"
+    ]
+  },
+  "mixins": [
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
