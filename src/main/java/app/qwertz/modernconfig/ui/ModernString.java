@@ -76,7 +76,7 @@ public class ModernString extends ClickableWidget {
         if (!focused) return false;
         if (value.length() >= maxLength) return false;
 
-        if (Character.isLetterOrDigit(chr) || chr == '_' || chr == '-' || chr == '.' || chr == ' ') {
+        if (Character.isLetterOrDigit(chr) || chr == '_' || chr == '-' || chr == '.' || chr == ' ' || chr == '#') {
             value = value.substring(0, cursorPosition) + chr + value.substring(cursorPosition);
             cursorPosition++;
             onChange.accept(value);

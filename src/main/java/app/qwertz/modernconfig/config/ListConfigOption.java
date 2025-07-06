@@ -4,12 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListConfigOption extends ConfigOption<List<String>> {
-    public ListConfigOption(String key, String description, String category, List<String> defaultValue) {
+    private final String childName;
+    
+    public ListConfigOption(String key, String description, String category, List<String> defaultValue, String childName) {
         super(key, description, category, new ArrayList<>(defaultValue));
+        this.childName = childName != null ? childName : "Item";
+    }
+
+    public ListConfigOption(String key, String description, String category, String childName) {
+        super(key, description, category, new ArrayList<>());
+        this.childName = childName != null ? childName : "Item";
     }
 
     public ListConfigOption(String key, String description, String category) {
         super(key, description, category, new ArrayList<>());
+        this.childName = "Item"; // Default fallback
     }
 
     public void addItem(String item) {
@@ -48,5 +57,9 @@ public class ListConfigOption extends ConfigOption<List<String>> {
 
     public void setItems(List<String> items) {
         setValue(new ArrayList<>(items));
+    }
+    
+    public String getChildName() {
+        return childName;
     }
 } 

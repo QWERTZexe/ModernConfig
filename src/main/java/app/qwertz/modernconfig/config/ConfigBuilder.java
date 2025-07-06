@@ -2,6 +2,7 @@ package app.qwertz.modernconfig.config;
 
 import net.minecraft.util.Identifier;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -56,6 +57,26 @@ public class ConfigBuilder {
 
     public ConfigBuilder list(String id, String name) {
         options.put(id, new ListConfigOption(id, name, name));
+        return this;
+    }
+
+    public ConfigBuilder list(String id, String name, String childName) {
+        options.put(id, new ListConfigOption(id, name, name, childName));
+        return this;
+    }
+
+    public ConfigBuilder color(String id, String name, int defaultValue) {
+        options.put(id, new ColorConfigOption(id, name, name, defaultValue));
+        return this;
+    }
+
+    public ConfigBuilder dropdown(String id, String name, List<String> options, String defaultValue) {
+        this.options.put(id, new DropdownConfigOption(id, name, name, options, defaultValue));
+        return this;
+    }
+
+    public ConfigBuilder dropdown(String id, String name, List<String> options) {
+        this.options.put(id, new DropdownConfigOption(id, name, name, options));
         return this;
     }
 

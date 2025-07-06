@@ -18,6 +18,7 @@ public class ModernList {
     private int x, y, width;
     private int itemHeight = 25;
     private int padding = 5;
+    private int headerHeight = 20;
     private int focusedIndex = -1;
     private long lastClickTime = 0;
 
@@ -38,7 +39,7 @@ public class ModernList {
         // Add inputs for existing items
         for (String item : items) {
             ModernString input = new ModernString(0, 0, 200, 20, 
-                Text.literal("Player IGN"), item, 
+                Text.literal(option.getChildName()), item, 
                 newVal -> {
                     // Value changes will be handled in updateOptionFromInputs
                 }, 16);
@@ -47,7 +48,7 @@ public class ModernList {
         
         // Always add one empty input at the end for adding new items
         ModernString addInput = new ModernString(0, 0, 200, 20, 
-            Text.literal("Player IGN"), "", 
+            Text.literal(option.getChildName()), "", 
             newVal -> {
                 // Value changes will be handled in updateOptionFromInputs
             }, 16);
@@ -59,9 +60,9 @@ public class ModernList {
         this.y = y;
         this.width = width;
         
-        // Update positions of all inputs
+        // Update positions of all inputs (offset by header height)
         for (int i = 0; i < inputs.size(); i++) {
-            int inputY = y + i * (itemHeight + padding);
+            int inputY = y + headerHeight + (padding / 2) + i * (itemHeight + padding);
             int inputWidth = width - 30; // Reserve space for icons
             ModernString input = inputs.get(i);
             input.setX(x);
@@ -71,14 +72,18 @@ public class ModernList {
     }
 
     public int getHeight() {
-        return Math.max(1, inputs.size()) * (itemHeight + padding) - padding;
+        return headerHeight + (padding / 2) + Math.max(1, inputs.size()) * (itemHeight + padding) - padding;
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient mc = MinecraftClient.getInstance();
         
+        // Render header with list name
+        context.drawText(mc.textRenderer, Text.literal(option.getDescription()), 
+                        x, y + 2, 0xFFFFFFFF, false);
+        
         for (int i = 0; i < inputs.size(); i++) {
-            int inputY = y + i * (itemHeight + padding);
+            int inputY = y + headerHeight + (padding / 2) + i * (itemHeight + padding);
             ModernString input = inputs.get(i);
             
             // Render input field
@@ -134,7 +139,7 @@ public class ModernList {
         boolean handled = false;
         
         for (int i = 0; i < inputs.size(); i++) {
-            int inputY = y + i * (itemHeight + padding);
+            int inputY = y + headerHeight + (padding / 2) + i * (itemHeight + padding);
             ModernString input = inputs.get(i);
             
             // Check input field click

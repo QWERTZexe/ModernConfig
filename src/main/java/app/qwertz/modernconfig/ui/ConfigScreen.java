@@ -206,6 +206,32 @@ public class ConfigScreen extends Screen {
                 Text.literal(listOpt.getDescription())
             );
             container.addElement(listWidget, new ModernContainer.LayoutOptions().setFullWidth(true));
+        } else if (opt instanceof ColorConfigOption colorOpt) {
+            ModernColorPicker colorPicker = new ModernColorPicker(
+                0, 0, 200, 30,
+                Text.literal(colorOpt.getDescription()),
+                colorOpt.getValue(),
+                newVal -> {
+                    colorOpt.setValue(newVal);
+                    // Update value immediately for visual feedback
+                }
+            ).setOnColorComplete(newVal -> {
+                // Save only when color selection is complete
+                ConfigManager.save();
+            });
+            container.addElement(colorPicker, new ModernContainer.LayoutOptions().setFullWidth(true));
+        } else if (opt instanceof DropdownConfigOption dropdownOpt) {
+            ModernDropdown dropdown = new ModernDropdown(
+                0, 0, 200, 23,
+                Text.literal(dropdownOpt.getDescription()),
+                dropdownOpt.getOptions(),
+                dropdownOpt.getSelectedIndex(),
+                newIndex -> {
+                    dropdownOpt.setSelectedIndex(newIndex);
+                    ConfigManager.save();
+                }
+            );
+            container.addElement(dropdown, new ModernContainer.LayoutOptions().setFullWidth(true));
         } else if (opt.getDefaultValue() instanceof Boolean bool) {
                 ModernToggle toggle = new ModernToggle(
                 0, 0, 200, 20,
@@ -392,6 +418,10 @@ public class ConfigScreen extends Screen {
                 if (listWidget.keyPressed(keyCode, scanCode, modifiers)) {
                     return true;
                 }
+            } else if (child instanceof ModernColorPicker colorPicker) {
+                if (colorPicker.keyPressed(keyCode, scanCode, modifiers)) {
+                    return true;
+                }
             }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -407,6 +437,10 @@ public class ConfigScreen extends Screen {
                 }
             } else if (child instanceof ModernListWidget listWidget) {
                 if (listWidget.charTyped(chr, modifiers)) {
+                    return true;
+                }
+            } else if (child instanceof ModernColorPicker colorPicker) {
+                if (colorPicker.charTyped(chr, modifiers)) {
                     return true;
                 }
             }

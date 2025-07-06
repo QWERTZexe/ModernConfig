@@ -142,7 +142,61 @@ public class ModernContainer {
         }
 
         // Update total content height
+        int oldContentHeight = contentHeight;
         contentHeight = currentY - startY + maxHeightInRow;
+        
+        // Clamp scroll offset if content height decreased (e.g., when color picker collapses)
+        boolean scrollChanged = false;
+        if (contentHeight < oldContentHeight) {
+            int maxScroll = Math.max(0, contentHeight - height);
+            if (scrollOffset > maxScroll) {
+                scrollOffset = maxScroll;
+                scrollChanged = true;
+            }
+        }
+        
+        // If scroll changed, update element positions with new scroll offset
+        if (scrollChanged) {
+            columnWidth = (width - (padding * (columns + 1))) / columns;
+            currentColumn = 0;
+            maxHeightInRow = 0;
+            currentY = startY;
+
+            if (title != null) {
+                currentY += 25; // Space for title
+            }
+
+            for (LayoutElement layoutElement : layoutElements) {
+                ClickableWidget element = layoutElement.element;
+                LayoutOptions options = layoutElement.options;
+
+                int elementWidth = options.fullWidth ? (options.spanColumns * columnWidth + (options.spanColumns - 1) * padding) : columnWidth;
+                int elementX = x + padding + (columnWidth + padding) * currentColumn;
+
+                // If element spans multiple columns or won't fit in current row, move to next row
+                if (options.spanColumns > 1 || currentColumn + options.spanColumns > columns) {
+                    currentColumn = 0;
+                    currentY += maxHeightInRow + padding;
+                    maxHeightInRow = 0;
+                    elementX = x + padding;
+                }
+
+                // Update element position with corrected scroll offset
+                element.setX(elementX);
+                element.setY(currentY - scrollOffset);
+                element.setWidth(elementWidth);
+
+                maxHeightInRow = Math.max(maxHeightInRow, element.getHeight());
+                currentColumn += options.spanColumns;
+
+                // Move to next row if we've filled all columns
+                if (currentColumn >= columns) {
+                    currentColumn = 0;
+                    currentY += maxHeightInRow + padding;
+                    maxHeightInRow = 0;
+                }
+            }
+        }
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
