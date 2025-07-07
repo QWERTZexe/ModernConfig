@@ -41,7 +41,6 @@ public class ModernConfigMod implements ClientModInitializer {
 
         // Build the configuration with examples of all config types
         return ConfigBuilder.create("ModernConfig", "Configuration for ModernConfig itself", modernConfigIcon)
-            // Example List Configuration
             .category("examples", "Examples", "Examples of different config types", category -> category
                 .list("example_list", "Example List", "Sample Entry")
                 .dropdown("example_dropdown", "Example Dropdown", Arrays.asList("Easy", "Medium", "Hard", "Expert"), "Medium")
@@ -56,5 +55,4 @@ public class ModernConfigMod implements ClientModInitializer {
             .end())
             .build();
     }
-
-    }
+}
