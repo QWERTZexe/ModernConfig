@@ -49,11 +49,11 @@ ModernConfig is a sleek configuration library for Minecraft Fabric mods that mak
 *´Main interface with animations and modern design*
 
 ### Configuration Options
-![Config Options](hhttps://raw.githubusercontent.com/QWERTZexe/ModernConfig/refs/heads/main/images/ConfigOptions.png)
+![Config Options](https://raw.githubusercontent.com/QWERTZexe/ModernConfig/refs/heads/main/images/ConfigOptions.png)
 *Rich variety of input types: toggles, sliders, text fields, and more*
 
 ### Color Picker
-![Color Picker](hhttps://raw.githubusercontent.com/QWERTZexe/ModernConfig/refs/heads/main/images/Color.png)
+![Color Picker](https://raw.githubusercontent.com/QWERTZexe/ModernConfig/refs/heads/main/images/Color.png)
 *HSV color picker with real-time preview*
 
 ## 🚀 Installation
