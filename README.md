@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/License-ARR-blue.svg)](LICENSE)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.6+-brightgreen.svg)](https://minecraft.net)
 [![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-orange.svg)](https://fabricmc.net)
-[![Version](https://img.shields.io/badge/Version-1.0.0-yellow.svg)](https://github.com/yourusername/modernconfig/releases)
+[![Version](https://img.shields.io/badge/Version-1.0-yellow.svg)](https://modrinth.com/mod/modernconfig)
 
 </div>
 
