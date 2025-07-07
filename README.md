@@ -84,7 +84,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation 'app.qwertz:modernconfig:1.0.0'
+    modImplementation 'app.qwertz:modernconfig:1.0'
 }
 ```
 
