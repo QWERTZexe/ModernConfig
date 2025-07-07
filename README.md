@@ -46,7 +46,7 @@ ModernConfig is a sleek configuration library for Minecraft Fabric mods that mak
 
 ### Main Interface
 ![Main Config Screen](https://raw.githubusercontent.com/QWERTZexe/ModernConfig/refs/heads/main/images/MainMenu.png)
-*´Main interface with animations and modern design*
+*Main interface with animations and modern design*
 
 ### Configuration Options
 ![Config Options](https://raw.githubusercontent.com/QWERTZexe/ModernConfig/refs/heads/main/images/ConfigOptions.png)
