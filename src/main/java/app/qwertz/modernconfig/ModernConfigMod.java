@@ -42,16 +42,17 @@ public class ModernConfigMod implements ClientModInitializer {
         // Build the configuration with examples of all config types
         return ConfigBuilder.create("ModernConfig", "Configuration for ModernConfig itself", modernConfigIcon)
             .category("examples", "Examples", "Examples of different config types", category -> category
-                .list("example_list", "Example List", "Sample Entry")
-                .dropdown("example_dropdown", "Example Dropdown", Arrays.asList("Easy", "Medium", "Hard", "Expert"), "Medium")
-                .dropdown("example_dropdown_2", "Example Dropdown 2", Arrays.asList("Dark", "Light", "Auto"), "Dark")
-                .dropdown("example_dropdown_3", "Example Dropdown 3", Arrays.asList("English", "Spanish", "French", "German", "Chinese"), "English")
-                .color("example_color", "Example Color", 0x0066CC)
-                .color("example_color_2", "Example Color 2", 0x00CC66)
-                .color("example_color_3", "Example Color 3", 0xCC6600)
-                .toggle("example_toggle", "Example Toggle", false)
-                .text("example_text", "Example Text", "Hello World!")
-                .slider("example_slider", "Example Slider", 50, 0, 100, 1)
+            .list("example_list", "Example List", "Sample Entry")
+            .dropdown("example_dropdown", "Example Dropdown", Arrays.asList("Easy", "Medium", "Hard", "Expert"), "Medium")
+            .dropdown("example_dropdown_2", "Example Dropdown 2", Arrays.asList("Dark", "Light", "Auto"), "Dark")
+            .dropdown("example_dropdown_3", "Example Dropdown 3", Arrays.asList("English", "Spanish", "French", "German", "Chinese"), "English")
+            .color("example_color", "Example Color", 0x0066CC)
+            .color("example_color_2", "Example Color 2", 0x00CC66)
+            .color("example_color_3", "Example Color 3", 0xCC6600)
+            .item("example_item", "Example Item", "Select a Minecraft item", "minecraft:diamond_sword")
+            .toggle("example_toggle", "Example Toggle", false)
+            .text("example_text", "Example Text", "Hello World!")
+            .slider("example_slider", "Example Slider", 50, 0, 100, 1)
             .end())
             .build();
     }

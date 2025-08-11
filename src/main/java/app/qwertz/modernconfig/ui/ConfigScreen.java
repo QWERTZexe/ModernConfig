@@ -9,6 +9,8 @@ import net.minecraft.text.Text;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
+import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -232,6 +234,24 @@ public class ConfigScreen extends Screen {
                 }
             );
             container.addElement(dropdown, new ModernContainer.LayoutOptions().setFullWidth(true));
+        } else if (opt instanceof ItemConfigOption itemOpt) {
+            // Get the item from the registry
+            Item item = Registries.ITEM.get(itemOpt.getValue());
+            if (item == null) {
+                // Fallback to stone if item not found
+                item = Registries.ITEM.get(Identifier.of("minecraft", "stone"));
+            }
+            
+            ModernItemSelector itemSelector = new ModernItemSelector(
+                0, 0, 200, 30,
+                Text.literal(itemOpt.getDescription()),
+                item,
+                newItem -> {
+                    itemOpt.setValue(Registries.ITEM.getId(newItem));
+                    ConfigManager.save();
+                }
+            );
+            container.addElement(itemSelector, new ModernContainer.LayoutOptions().setFullWidth(true));
         } else if (opt.getDefaultValue() instanceof Boolean bool) {
                 ModernToggle toggle = new ModernToggle(
                 0, 0, 200, 20,
@@ -422,6 +442,10 @@ public class ConfigScreen extends Screen {
                 if (colorPicker.keyPressed(keyCode, scanCode, modifiers)) {
                     return true;
                 }
+            } else if (child instanceof ModernItemSelector itemSelector) {
+                if (itemSelector.keyPressed(keyCode, scanCode, modifiers)) {
+                    return true;
+                }
             }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -441,6 +465,10 @@ public class ConfigScreen extends Screen {
                 }
             } else if (child instanceof ModernColorPicker colorPicker) {
                 if (colorPicker.charTyped(chr, modifiers)) {
+                    return true;
+                }
+            } else if (child instanceof ModernItemSelector itemSelector) {
+                if (itemSelector.charTyped(chr, modifiers)) {
                     return true;
                 }
             }

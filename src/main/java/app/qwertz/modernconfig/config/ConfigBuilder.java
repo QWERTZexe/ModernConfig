@@ -80,6 +80,16 @@ public class ConfigBuilder {
         return this;
     }
 
+    public ConfigBuilder item(String id, String name, String defaultValue) {
+        options.put(id, new ItemConfigOption(id, name, name, defaultValue));
+        return this;
+    }
+
+    public ConfigBuilder item(String id, String name, String description, String defaultValue) {
+        options.put(id, new ItemConfigOption(id, name, description, defaultValue));
+        return this;
+    }
+
     public <T> ConfigBuilder option(String id, String name, T defaultValue) {
         options.put(id, new ConfigOption<>(id, name, name, defaultValue));
         return this;
