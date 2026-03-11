@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.config;
 
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.util.Identifier;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,25 +14,35 @@ public class ConfigBuilder {
     private final String description;
     private final String id;
     private final Identifier icon;
+    private final ModernConfigTheme theme;
 
-    private ConfigBuilder(String id, String name, String description, Identifier icon, ConfigBuilder parent) {
+    private ConfigBuilder(String id, String name, String description, Identifier icon, ModernConfigTheme theme, ConfigBuilder parent) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.icon = icon;
+        this.theme = theme;
         this.parent = parent;
     }
 
     public static ConfigBuilder create(String name, String description) {
-        return new ConfigBuilder(name.toLowerCase(), name, description, null, null);
+        return new ConfigBuilder(name.toLowerCase(), name, description, null, null, null);
     }
 
     public static ConfigBuilder create(String name, String description, Identifier icon) {
-        return new ConfigBuilder(name.toLowerCase(), name, description, icon, null);
+        return new ConfigBuilder(name.toLowerCase(), name, description, icon, null, null);
+    }
+
+    public static ConfigBuilder create(String name, String description, ModernConfigTheme theme) {
+        return new ConfigBuilder(name.toLowerCase(), name, description, null, theme, null);
+    }
+
+    public static ConfigBuilder create(String name, String description, Identifier icon, ModernConfigTheme theme) {
+        return new ConfigBuilder(name.toLowerCase(), name, description, icon, theme, null);
     }
 
     public ConfigBuilder category(String id, String displayName, String description) {
-        return new ConfigBuilder(id, displayName, description, null, this);
+        return new ConfigBuilder(id, displayName, description, null, null, this);
     }
 
     public ConfigBuilder category(String id, String displayName, String description, Consumer<ConfigBuilder> builder) {
@@ -62,6 +73,12 @@ public class ConfigBuilder {
 
     public ConfigBuilder list(String id, String name, String childName) {
         options.put(id, new ListConfigOption(id, name, name, childName));
+        return this;
+    }
+
+    /** List with expandable/collapsible UI. Default true = expandable. */
+    public ConfigBuilder list(String id, String name, String childName, boolean expandable) {
+        options.put(id, new ListConfigOption(id, name, name, childName, expandable));
         return this;
     }
 
@@ -121,7 +138,7 @@ public class ConfigBuilder {
         if (parent != null) {
             throw new IllegalStateException("buildConfig() can only be called on the root builder. Use end() to finish a category.");
         }
-        return ModernConfig.create(id, name, description, icon, options);
+        return ModernConfig.create(id, name, description, icon, theme, options);
     }
 
     public Identifier getIcon() {

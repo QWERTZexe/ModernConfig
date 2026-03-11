@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.config;
 
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import app.qwertz.modernconfig.ui.ConfigScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
@@ -33,8 +34,17 @@ public class ModernConfig {
         return ConfigManager.getModConfig(modId);
     }
 
+    public static ModernConfig create(String modId, String name, String description, Identifier icon, ModernConfigTheme theme, Map<String, Object> config) {
+        ConfigManager.registerConfig(modId, name, description, icon, theme, config);
+        return ConfigManager.getModConfig(modId);
+    }
+
     public void openScreen() {
         MinecraftClient.getInstance().setScreen(new ConfigScreen(modId));
+    }
+
+    public ConfigScreen getScreen() {
+        return new ConfigScreen(modId);
     }
 
     @SuppressWarnings("unchecked")
@@ -83,8 +93,12 @@ public class ModernConfig {
         ConfigManager.save();
         notifySaveListeners();
     }
+
     public static void openGlobalConfig() {
         MinecraftClient.getInstance().setScreen(new ConfigScreen());
     }
 
-} 
+    public static ConfigScreen getGlobalConfigScreen() {
+        return new ConfigScreen();
+    }
+}

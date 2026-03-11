@@ -1,10 +1,9 @@
 package app.qwertz.modernconfig;
 
 import app.qwertz.modernconfig.config.*;
-import app.qwertz.modernconfig.ui.ConfigScreen;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.Identifier;
@@ -39,10 +38,16 @@ public class ModernConfigMod implements ClientModInitializer {
         // Create icon for ModernConfig
         Identifier modernConfigIcon = Identifier.of("modernconfig", "icon.png");
 
-        // Build the configuration with examples of all config types
-        return ConfigBuilder.create("ModernConfig", "Configuration for ModernConfig itself", modernConfigIcon)
+        // Build the configuration with settings and examples
+        return ConfigBuilder.create("ModernConfig", "Configuration for ModernConfig itself", modernConfigIcon, ModernConfigTheme.YELLOW)
+            .category("settings", "Settings", "Settings for ModernConfig", settings -> settings
+            .toggle("enable_animations", "Enable animations", true)
+            .toggle("show_credit", "Show credit line", true)
+            .dropdown("mod_top_exit_button", "Mod config top button", Arrays.asList("Close", "Back"), "Back")
+            .dropdown("animation_speed", "Animation speed", Arrays.asList("Fast", "Normal", "Slow", "Super slow"), "Slow")
+            .end())
             .category("examples", "Examples", "Examples of different config types", category -> category
-            .list("example_list", "Example List", "Sample Entry")
+            .list("example_list", "Example List", "Sample Entry", true)
             .dropdown("example_dropdown", "Example Dropdown", Arrays.asList("Easy", "Medium", "Hard", "Expert"), "Medium")
             .dropdown("example_dropdown_2", "Example Dropdown 2", Arrays.asList("Dark", "Light", "Auto"), "Dark")
             .dropdown("example_dropdown_3", "Example Dropdown 3", Arrays.asList("English", "Spanish", "French", "German", "Chinese"), "English")

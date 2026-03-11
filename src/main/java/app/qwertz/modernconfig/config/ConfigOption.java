@@ -33,7 +33,9 @@ public class ConfigOption<T> {
 
     public void setValue(T value) {
         this.value = value;
-        ConfigManager.save();
+        if (!ConfigManager.isLoading) {
+            ConfigManager.save();
+        }
     }
 
     public T getDefaultValue() {

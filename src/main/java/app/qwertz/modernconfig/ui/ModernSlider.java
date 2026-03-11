@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
@@ -20,10 +21,17 @@ public class ModernSlider extends ClickableWidget {
     private final int precision; // Number of decimal places
     private long lastUpdateTime = 0;
     private static final long UPDATE_INTERVAL = 50; // 50ms = 0.05 seconds
+    private final ModernConfigTheme theme;
     
     public ModernSlider(int x, int y, int width, int height, Text message, 
                        double minValue, double maxValue, double currentValue, 
                        int precision, Consumer<Double> onValueChanged) {
+        this(x, y, width, height, message, minValue, maxValue, currentValue, precision, onValueChanged, null);
+    }
+    
+    public ModernSlider(int x, int y, int width, int height, Text message, 
+                       double minValue, double maxValue, double currentValue, 
+                       int precision, Consumer<Double> onValueChanged, ModernConfigTheme theme) {
         super(x, y, width, height, message);
         this.minValue = minValue;
         this.maxValue = maxValue;
@@ -31,6 +39,7 @@ public class ModernSlider extends ClickableWidget {
         this.precision = precision;
         this.onValueChanged = onValueChanged;
         this.onDragComplete = null;
+        this.theme = theme;
     }
     
     public ModernSlider setOnDragComplete(Consumer<Double> onDragComplete) {
@@ -70,8 +79,9 @@ public class ModernSlider extends ClickableWidget {
         double valuePercent = (currentValue - minValue) / (maxValue - minValue);
         int sliderPos = (int) (getX() + 8 + (getWidth() - 20) * valuePercent);
         
-        // Track color changes to yellow on hover
-        int trackColor = isHovering ? RenderUtil.applyAlpha(0xFFFFD700, alpha) : RenderUtil.applyAlpha(0xFF444444, alpha);
+        // Track color: accent (or gold) on hover, gray otherwise
+        int hoverTrackRgb = theme != null ? theme.getAccentColor() : 0xFFD700;
+        int trackColor = isHovering ? RenderUtil.applyAlpha(0xFF000000 | (hoverTrackRgb & 0xFFFFFF), alpha) : RenderUtil.applyAlpha(0xFF444444, alpha);
         int thumbColor = RenderUtil.applyAlpha(0xFFFFFFFF, alpha);
         
         // Draw track background - gray normally, yellow on hover
@@ -92,7 +102,7 @@ public class ModernSlider extends ClickableWidget {
             String valueText = formatValue(currentValue);
             String fullText = labelText + ": " + valueText;
             
-            int textColor = 0xFFFFFFFF;
+            int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
             context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, fullText, getX(), getY() - 2, textColor);
         } catch (Exception e) {
             // Fail silently if text rendering has issues

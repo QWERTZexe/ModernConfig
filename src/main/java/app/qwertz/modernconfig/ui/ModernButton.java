@@ -1,5 +1,7 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -8,19 +10,24 @@ import net.minecraft.client.MinecraftClient;
 
 public class ModernButton extends ClickableWidget {
     private final Runnable onClick;
+    private final ModernConfigTheme theme;
     private float animationProgress = 0.0f;
-    private static final int ANIMATION_DURATION = 200; // milliseconds
     private long lastTime = System.currentTimeMillis();
 
     public ModernButton(int x, int y, int width, int height, Text text, Runnable onClick) {
+        this(x, y, width, height, text, onClick, null);
+    }
+
+    public ModernButton(int x, int y, int width, int height, Text text, Runnable onClick, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.onClick = onClick;
+        this.theme = theme;
     }
 
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / (float)ANIMATION_DURATION;
+        float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
 
         if (isHovered()) {
@@ -37,20 +44,27 @@ public class ModernButton extends ClickableWidget {
         
         RenderUtil.drawRoundedRect(context, getX(), getY(), getWidth(), getHeight(), 4, currentColor);
         
-        // Draw outline
-        int outlineColor = RenderUtil.interpolateColor(0x33FFFFFF, 0x77FFFFFF, easedProgress);
+        // Draw outline (accent tint when themed and hovered)
+        int outlineLo = 0x33FFFFFF;
+        int outlineHi = 0x77FFFFFF;
+        if (theme != null && easedProgress > 0) {
+            int accent = theme.getAccentColor();
+            outlineHi = (0x77 << 24) | (accent & 0xFFFFFF);
+        }
+        int outlineColor = RenderUtil.interpolateColor(outlineLo, outlineHi, easedProgress);
         RenderUtil.drawRoundedRect(context, getX(), getY(), getWidth(), 1, 0, outlineColor); // top
         RenderUtil.drawRoundedRect(context, getX(), getY() + getHeight() - 1, getWidth(), 1, 0, outlineColor); // bottom
         RenderUtil.drawRoundedRect(context, getX(), getY(), 1, getHeight(), 0, outlineColor); // left
         RenderUtil.drawRoundedRect(context, getX() + getWidth() - 1, getY(), 1, getHeight(), 0, outlineColor); // right
 
+        int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (getHeight() - 8) / 2.0f;
         context.drawTextWithShadow(
             MinecraftClient.getInstance().textRenderer,
             getMessage(),
             getX() + (getWidth() - MinecraftClient.getInstance().textRenderer.getWidth(getMessage())) / 2,
             (int)textY,
-            0xFFFFFFFF
+            textColor
         );
     }
 

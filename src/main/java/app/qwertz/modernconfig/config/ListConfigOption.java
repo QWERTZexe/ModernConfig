@@ -5,20 +5,30 @@ import java.util.List;
 
 public class ListConfigOption extends ConfigOption<List<String>> {
     private final String childName;
-    
+    private final boolean expandable;
+
     public ListConfigOption(String key, String description, String category, List<String> defaultValue, String childName) {
         super(key, description, category, new ArrayList<>(defaultValue));
         this.childName = childName != null ? childName : "Item";
+        this.expandable = true;
     }
 
     public ListConfigOption(String key, String description, String category, String childName) {
         super(key, description, category, new ArrayList<>());
         this.childName = childName != null ? childName : "Item";
+        this.expandable = true;
+    }
+
+    public ListConfigOption(String key, String description, String category, String childName, boolean expandable) {
+        super(key, description, category, new ArrayList<>());
+        this.childName = childName != null ? childName : "Item";
+        this.expandable = expandable;
     }
 
     public ListConfigOption(String key, String description, String category) {
         super(key, description, category, new ArrayList<>());
-        this.childName = "Item"; // Default fallback
+        this.childName = "Item";
+        this.expandable = true;
     }
 
     public void addItem(String item) {
@@ -61,5 +71,10 @@ public class ListConfigOption extends ConfigOption<List<String>> {
     
     public String getChildName() {
         return childName;
+    }
+
+    /** Whether the list can be expanded/collapsed in the UI (default true). */
+    public boolean isExpandable() {
+        return expandable;
     }
 } 

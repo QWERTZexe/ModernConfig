@@ -1,5 +1,7 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -11,22 +13,27 @@ import java.util.function.Consumer;
 public class ModernToggle extends ClickableWidget {
     private boolean state;
     private final Consumer<Boolean> onToggle;
+    private final ModernConfigTheme theme;
     private float animationProgress = 0.0f;
     private float toggleProgress = 0.0f;
-    private static final int ANIMATION_DURATION = 200; // milliseconds
     private long lastTime = System.currentTimeMillis();
 
     public ModernToggle(int x, int y, int width, int height, Text text, boolean initial, Consumer<Boolean> onToggle) {
+        this(x, y, width, height, text, initial, onToggle, null);
+    }
+
+    public ModernToggle(int x, int y, int width, int height, Text text, boolean initial, Consumer<Boolean> onToggle, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.state = initial;
         this.onToggle = onToggle;
+        this.theme = theme;
         this.toggleProgress = initial ? 1.0f : 0.0f;
     }
 
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / (float)ANIMATION_DURATION;
+        float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
 
         // Hover animation
@@ -60,7 +67,7 @@ public class ModernToggle extends ClickableWidget {
         
         // Draw toggle background
         int offColor = 0xFF444444;
-        int onColor = 0xFF88CC88;
+        int onColor = theme != null ? (0xFF000000 | (theme.getAccentSecondary() & 0xFFFFFF)) : 0xFF88CC88;
         int toggleBgColor = RenderUtil.interpolateColor(offColor, onColor, easedToggleProgress);
         RenderUtil.drawRoundedRect(context, toggleX, toggleY, toggleWidth, toggleHeight, toggleHeight / 2, toggleBgColor);
         
@@ -70,13 +77,14 @@ public class ModernToggle extends ClickableWidget {
         RenderUtil.drawRoundedRect(context, (int)knobX, toggleY + 2, knobSize, knobSize, knobSize / 2, 0xFFFFFFFF);
 
         // Draw text
+        int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (getHeight() - 8) / 2.0f;
         context.drawTextWithShadow(
             MinecraftClient.getInstance().textRenderer,
             getMessage(),
             getX() + 8,
             (int)textY,
-            0xFFFFFFFF
+            textColor
         );
     }
 

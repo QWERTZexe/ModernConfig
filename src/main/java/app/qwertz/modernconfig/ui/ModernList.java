@@ -2,6 +2,7 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ListConfigOption;
 import app.qwertz.modernconfig.config.ConfigManager;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.sound.PositionedSoundInstance;
@@ -13,6 +14,7 @@ import java.util.List;
 
 public class ModernList {
     private final ListConfigOption option;
+    private final ModernConfigTheme theme;
     private final List<ModernString> inputs;
     private ModernListWidget parentWidget;
     private int x, y, width;
@@ -21,9 +23,15 @@ public class ModernList {
     private int headerHeight = 20;
     private int focusedIndex = -1;
     private long lastClickTime = 0;
+    private boolean drawHeader = true;
 
     public ModernList(ListConfigOption option) {
+        this(option, null);
+    }
+
+    public ModernList(ListConfigOption option, ModernConfigTheme theme) {
         this.option = option;
+        this.theme = theme;
         this.inputs = new ArrayList<>();
         rebuildInputs();
     }
@@ -42,7 +50,7 @@ public class ModernList {
                 Text.literal(option.getChildName()), item, 
                 newVal -> {
                     // Value changes will be handled in updateOptionFromInputs
-                }, 16);
+                }, 16, theme);
             inputs.add(input);
         }
         
@@ -51,19 +59,23 @@ public class ModernList {
             Text.literal(option.getChildName()), "", 
             newVal -> {
                 // Value changes will be handled in updateOptionFromInputs
-            }, 16);
+            }, 16, theme);
         inputs.add(addInput);
+    }
+
+    /** When false, no label is drawn and getHeight() returns content-only height (for expandable widget). */
+    public void setDrawHeader(boolean draw) {
+        this.drawHeader = draw;
     }
 
     public void setPosition(int x, int y, int width) {
         this.x = x;
         this.y = y;
         this.width = width;
-        
-        // Update positions of all inputs (offset by header height)
+        int contentStart = drawHeader ? headerHeight : 0;
         for (int i = 0; i < inputs.size(); i++) {
-            int inputY = y + headerHeight + (padding / 2) + i * (itemHeight + padding);
-            int inputWidth = width - 30; // Reserve space for icons
+            int inputY = y + contentStart + (padding / 2) + i * (itemHeight + padding);
+            int inputWidth = width - 30;
             ModernString input = inputs.get(i);
             input.setX(x);
             input.setY(inputY);
@@ -72,18 +84,19 @@ public class ModernList {
     }
 
     public int getHeight() {
-        return headerHeight + (padding / 2) + Math.max(1, inputs.size()) * (itemHeight + padding) - padding;
+        int content = (padding / 2) + Math.max(1, inputs.size()) * (itemHeight + padding) - padding;
+        return drawHeader ? headerHeight + content : content;
     }
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient mc = MinecraftClient.getInstance();
-        
-        // Render header with list name
-        context.drawText(mc.textRenderer, Text.literal(option.getDescription()), 
-                        x, y + 2, 0xFFFFFFFF, false);
-        
+        int contentStart = drawHeader ? headerHeight : 0;
+        if (drawHeader) {
+            int headerColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
+            context.drawText(mc.textRenderer, Text.literal(option.getDescription()), x, y + 2, headerColor, false);
+        }
         for (int i = 0; i < inputs.size(); i++) {
-            int inputY = y + headerHeight + (padding / 2) + i * (itemHeight + padding);
+            int inputY = y + contentStart + (padding / 2) + i * (itemHeight + padding);
             ModernString input = inputs.get(i);
             
             // Render input field
@@ -135,51 +148,49 @@ public class ModernList {
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button != 0) return false;
-        
-        boolean handled = false;
-        
+
+        int contentStart = drawHeader ? headerHeight : 0;
+        // Find target by bounds first (so we can clear others before processing click; fixes bottom-to-top focus)
+        int targetInputIndex = -1;
+        int targetIconIndex = -1;
         for (int i = 0; i < inputs.size(); i++) {
-            int inputY = y + headerHeight + (padding / 2) + i * (itemHeight + padding);
+            int inputY = y + contentStart + (padding / 2) + i * (itemHeight + padding);
             ModernString input = inputs.get(i);
-            
-            // Check input field click
-            if (input.mouseClicked(mouseX, mouseY, button)) {
-                focusedIndex = i;
-                handled = true;
+            if (mouseX >= input.getX() && mouseX <= input.getX() + input.getWidth() &&
+                mouseY >= input.getY() && mouseY <= input.getY() + input.getHeight()) {
+                targetInputIndex = i;
                 break;
             }
-            
-            // Check icon clicks
             int iconX = x + width - 25;
             int iconY = inputY + 2;
-            
-            if (mouseX >= iconX && mouseX <= iconX + 20 && 
-                mouseY >= iconY && mouseY <= iconY + 20) {
-                
-                MinecraftClient.getInstance().getSoundManager().play(
-                    PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
-                );
-                
-                if (i < inputs.size() - 1) {
-                    // Delete button clicked
-                    removeItem(i);
-                } else {
-                    // Add button clicked
-                    addItem();
-                }
-                handled = true;
+            if (mouseX >= iconX && mouseX <= iconX + 20 && mouseY >= iconY && mouseY <= iconY + 20) {
+                targetIconIndex = i;
                 break;
             }
         }
-        
-        if (!handled) {
-            focusedIndex = -1;
-            for (ModernString input : inputs) {
-                input.setFocused(false);
-            }
+
+        // Clear focus from all inputs first so only the clicked one gets focus (fixes bottom-to-top)
+        for (ModernString input : inputs) {
+            input.setFocused(false);
         }
-        
-        return handled;
+        focusedIndex = -1;
+
+        if (targetIconIndex >= 0) {
+            MinecraftClient.getInstance().getSoundManager().play(
+                PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+            );
+            if (targetIconIndex < inputs.size() - 1) {
+                removeItem(targetIconIndex);
+            } else {
+                addItem();
+            }
+            return true;
+        }
+        if (targetInputIndex >= 0) {
+            focusedIndex = targetInputIndex;
+            return inputs.get(targetInputIndex).mouseClicked(mouseX, mouseY, button);
+        }
+        return false;
     }
 
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
@@ -253,5 +264,13 @@ public class ModernList {
 
     public ListConfigOption getOption() {
         return option;
+    }
+
+    /** Clear focus from the focused input so only one list has focus at a time. */
+    public void clearFocus() {
+        focusedIndex = -1;
+        for (ModernString input : inputs) {
+            input.setFocused(false);
+        }
     }
 } 

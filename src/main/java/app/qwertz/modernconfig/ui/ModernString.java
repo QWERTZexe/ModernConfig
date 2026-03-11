@@ -1,5 +1,7 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -11,25 +13,30 @@ import java.util.function.Consumer;
 public class ModernString extends ClickableWidget {
     private String value;
     private final Consumer<String> onChange;
+    private final ModernConfigTheme theme;
     private float animationProgress = 0.0f;
     private boolean focused = false;
     private int cursorPosition = 0;
     private int selectionStart = 0;
     private int selectionEnd = 0;
-    private static final int ANIMATION_DURATION = 200; // milliseconds
     private long lastTime = System.currentTimeMillis();
     private float cursorBlink = 0.0f;
     private final int maxLength;
 
     public ModernString(int x, int y, int width, int height, Text text, String initial, Consumer<String> onChange) {
-        this(x, y, width, height, text, initial, onChange, 32);
+        this(x, y, width, height, text, initial, onChange, 32, null);
     }
 
     public ModernString(int x, int y, int width, int height, Text text, String initial, Consumer<String> onChange, int maxLength) {
+        this(x, y, width, height, text, initial, onChange, maxLength, null);
+    }
+
+    public ModernString(int x, int y, int width, int height, Text text, String initial, Consumer<String> onChange, int maxLength, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.value = initial != null ? initial : "";
         this.onChange = onChange;
         this.maxLength = maxLength;
+        this.theme = theme;
         this.cursorPosition = this.value.length();
     }
 
@@ -88,7 +95,7 @@ public class ModernString extends ClickableWidget {
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / (float)ANIMATION_DURATION;
+        float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
 
         if (isHovered() || focused) {
@@ -106,13 +113,19 @@ public class ModernString extends ClickableWidget {
         int currentColor = RenderUtil.interpolateColor(baseColor, hoverColor, easedProgress);
         RenderUtil.drawRoundedRect(context, getX(), getY(), getWidth(), getHeight(), 4, currentColor);
         
-        // Draw outline
-        int outlineColor = RenderUtil.interpolateColor(0x33FFFFFF, 0x77FFFFFF, easedProgress);
+        // Draw outline (accent when themed)
+        int outlineLo = 0x33FFFFFF;
+        int outlineHi = 0x77FFFFFF;
+        if (theme != null && easedProgress > 0) {
+            outlineHi = (0x77 << 24) | (theme.getAccentColor() & 0xFFFFFF);
+        }
+        int outlineColor = RenderUtil.interpolateColor(outlineLo, outlineHi, easedProgress);
         RenderUtil.drawRoundedRect(context, getX(), getY(), getWidth(), 1, 0, outlineColor); // top
         RenderUtil.drawRoundedRect(context, getX(), getY() + getHeight() - 1, getWidth(), 1, 0, outlineColor); // bottom
         RenderUtil.drawRoundedRect(context, getX(), getY(), 1, getHeight(), 0, outlineColor); // left
         RenderUtil.drawRoundedRect(context, getX() + getWidth() - 1, getY(), 1, getHeight(), 0, outlineColor); // right
 
+        int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         // Draw label
         float textY = getY() + (getHeight() - 8) / 2.0f;
         context.drawTextWithShadow(
@@ -120,7 +133,7 @@ public class ModernString extends ClickableWidget {
             getMessage(),
             getX() + 8,
             (int)textY,
-            0xFFFFFFFF
+            textColor
         );
 
         // Calculate text position
@@ -135,14 +148,15 @@ public class ModernString extends ClickableWidget {
             visibleText,
             textX,
             (int)textY,
-            0xFFFFFFFF
+            textColor
         );
 
-        // Draw cursor
+        // Draw cursor (ensure full opacity - theme accent may be RGB only)
         if (focused && cursorBlink < 1.0f) {
             String textBeforeCursor = value.substring(0, cursorPosition);
             int cursorX = textX + MinecraftClient.getInstance().textRenderer.getWidth(textBeforeCursor);
-            context.fill(cursorX, (int)textY - 1, cursorX + 1, (int)textY + 9, 0xFFFFFFFF);
+            int cursorColor = theme != null ? (0xFF000000 | (theme.getAccentColor() & 0xFFFFFF)) : 0xFFFFFFFF;
+            context.fill(cursorX, (int)textY - 1, cursorX + 1, (int)textY + 9, cursorColor);
         }
     }
 

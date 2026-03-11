@@ -1,5 +1,7 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -15,25 +17,30 @@ public class ModernDropdown extends ClickableWidget {
     private final List<String> options;
     private int selectedIndex;
     private final Consumer<Integer> onSelectionChange;
+    private final ModernConfigTheme theme;
     private boolean isExpanded = false;
     private float animationProgress = 0.0f;
     private float expandProgress = 0.0f;
-    private static final int ANIMATION_DURATION = 200; // milliseconds
     private long lastTime = System.currentTimeMillis();
     private final int optionHeight = 20;
-    private final int maxVisibleOptions = 5;
+    private final int maxVisibleOptions = 10;
 
     public ModernDropdown(int x, int y, int width, int height, Text text, List<String> options, int selectedIndex, Consumer<Integer> onSelectionChange) {
+        this(x, y, width, height, text, options, selectedIndex, onSelectionChange, null);
+    }
+
+    public ModernDropdown(int x, int y, int width, int height, Text text, List<String> options, int selectedIndex, Consumer<Integer> onSelectionChange, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.options = options;
         this.selectedIndex = selectedIndex;
         this.onSelectionChange = onSelectionChange;
+        this.theme = theme;
     }
 
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / (float)ANIMATION_DURATION;
+        float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
 
         // Hover animation
@@ -67,13 +74,14 @@ public class ModernDropdown extends ClickableWidget {
         RenderUtil.drawRoundedRect(context, getX(), getY(), getWidth(), mainHeight, 4, currentColor);
         
         // Draw label (dropdown name)
+        int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (mainHeight - 8) / 2.0f;
         context.drawTextWithShadow(
             MinecraftClient.getInstance().textRenderer,
             getMessage(),
             getX() + 8,
             (int)textY,
-            0xFFFFFFFF
+            textColor
         );
         
         // Calculate text position for selected option
@@ -87,7 +95,7 @@ public class ModernDropdown extends ClickableWidget {
             Text.literal(selectedText),
             selectedTextX,
             (int)textY,
-            0xFFFFFFFF
+            textColor
         );
 
         // Draw dropdown arrow
@@ -129,13 +137,14 @@ public class ModernDropdown extends ClickableWidget {
             
             // Draw option text
             if (optionHeight > 4) { // Only draw text if there's enough space
-                int textColor = (i == selectedIndex) ? 0xFF88CC88 : 0xFFFFFFFF;
+                int selectedColor = theme != null ? (0xFF000000 | (theme.getAccentSecondary() & 0xFFFFFF)) : 0xFF88CC88;
+                int optionTextColor = (i == selectedIndex) ? selectedColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
                 context.drawTextWithShadow(
                     MinecraftClient.getInstance().textRenderer,
                     Text.literal(options.get(i)),
                     getX() + 8,
                     optionY + (optionHeight - 8) / 2,
-                    textColor
+                    optionTextColor
                 );
             }
         }
@@ -231,12 +240,12 @@ public class ModernDropdown extends ClickableWidget {
 
     @Override
     public int getHeight() {
-        // Return expanded height for layout system to move other widgets down
-        if (isExpanded && expandProgress > 0.0f) {
+        // Use expandProgress (not isExpanded) so layout animates on collapse too; items below move up in sync
+        if (expandProgress > 0.001f) {
             int visibleOptions = Math.min(options.size(), maxVisibleOptions);
-            return super.getHeight() + 2 + (int)(visibleOptions * optionHeight * expandProgress);
+            return getMainHeight() + 2 + (int)(visibleOptions * optionHeight * expandProgress);
         }
-        return super.getHeight();
+        return getMainHeight();
     }
     
     public int getMainHeight() {
@@ -261,6 +270,25 @@ public class ModernDropdown extends ClickableWidget {
     public void collapse() {
         isExpanded = false;
         updateParentLayout();
+    }
+
+    public boolean isExpanded() {
+        return isExpanded;
+    }
+
+    /** Clear focus (collapse) so only one dropdown is open at a time. */
+    public void clearFocus() {
+        clearFocus(true);
+    }
+    
+    /** Clear focus with option to skip layout update (for batching). */
+    public void clearFocus(boolean updateLayout) {
+        if (isExpanded) {
+            isExpanded = false;
+            if (updateLayout) {
+                updateParentLayout();
+            }
+        }
     }
 
     private void updateParentLayout() {

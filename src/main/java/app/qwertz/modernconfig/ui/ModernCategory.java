@@ -8,9 +8,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.screen.narration.NarrationPart;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
 import app.qwertz.modernconfig.config.ConfigOption;
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,14 +23,24 @@ public class ModernCategory extends ClickableWidget {
     private final List<Object> elements = new ArrayList<>(); // Can contain ConfigOption<?> or ModernCategory
     private float hoverProgress = 0.0f;
     private float arrowAnimProgress = 0.0f;
-    private static final int HOVER_ANIMATION_DURATION = 200; // milliseconds
     private long lastTime = System.currentTimeMillis();
     private final Consumer<ModernCategory> onClick;
+    private final ModernConfigTheme theme;
 
     public ModernCategory(int x, int y, int width, int height, Text title, Text description, Consumer<ModernCategory> onClick) {
         super(x, y, width, height, title);
         this.description = description;
         this.icon = null;
+        this.theme = null;
+        this.onClick = onClick;
+    }
+
+    /** With optional theme for this mod's config submenus. */
+    public ModernCategory(int x, int y, int width, int height, Text title, Text description, ModernConfigTheme theme, Consumer<ModernCategory> onClick) {
+        super(x, y, width, height, title);
+        this.description = description;
+        this.icon = null;
+        this.theme = theme;
         this.onClick = onClick;
     }
 
@@ -37,6 +48,7 @@ public class ModernCategory extends ClickableWidget {
         super(x, y, width, height, title);
         this.description = description;
         this.icon = icon;
+        this.theme = null;
         this.onClick = onClick;
     }
 
@@ -58,7 +70,7 @@ public class ModernCategory extends ClickableWidget {
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / (float)HOVER_ANIMATION_DURATION;
+        float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
 
         if (isHovered()) {
@@ -80,7 +92,8 @@ public class ModernCategory extends ClickableWidget {
         // Add subtle glow effect when hovered
         if (hoverProgress > 0) {
             int glowAlpha = (int)(easedProgress * 20);
-            int glowColor = (glowAlpha << 24) | 0x4A90E2;
+            int accent = theme != null ? theme.getAccentColor() : 0x4A90E2;
+            int glowColor = (glowAlpha << 24) | (accent & 0xFFFFFF);
             RenderUtil.drawRoundedRect(context, getX() - 1, getY() - 1, width + 2, height + 2, 9, glowColor);
         }
         
@@ -114,8 +127,8 @@ public class ModernCategory extends ClickableWidget {
             descStartX += 42;
         }
 
-        // Title in white
-        int titleColor = 0xFFFFFFFF; // Pure white, no hover interpolation
+        // Title (theme text color)
+        int titleColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         int titleY = getY() + 8; // Moved up slightly
       //  if (icon != null) {
         //    titleY = titleY + 8;
@@ -130,29 +143,22 @@ public class ModernCategory extends ClickableWidget {
             context.drawTexture(RenderPipelines.GUI_TEXTURED, icon, iconX, iconY, 0.0f, 0.0f, iconSize, iconSize, iconSize, iconSize);
         }
 
-        // Description in light grey
-        int descriptionColor = 0xFFAAAAAA; // Light grey, no hover interpolation
-        int descriptionY = titleY + textRenderer.fontHeight + 2; // Closer to title
-     //   if (icon != null) {
-     //       descriptionY = descriptionY + 12;
-     //   }
-        // Wrap description text if too long
-        String descText = description.getString();
-        int maxDescWidth = width - 60; // More space for text, arrow is at the right
-        if (textRenderer.getWidth(descText) > maxDescWidth) {
-            while (textRenderer.getWidth(descText + "...") > maxDescWidth && descText.length() > 0) {
-                descText = descText.substring(0, descText.length() - 1);
-            }
-            descText += "...";
+        // Description (theme secondary text color) – up to 2 lines, then "..." on second line if needed
+        int descriptionColor = theme != null ? theme.getTextColorSecondary() : 0xFFAAAAAA;
+        int descriptionY = titleY + textRenderer.fontHeight + 2;
+        int lineHeight = textRenderer.fontHeight + 2;
+        int maxDescWidth = width - 80;
+        String fullDesc = description.getString();
+        String[] lines = wrapDescriptionToTwoLines(textRenderer, fullDesc, maxDescWidth);
+        for (int i = 0; i < lines.length; i++) {
+            context.drawTextWithShadow(textRenderer, lines[i], descStartX, descriptionY + i * lineHeight, descriptionColor);
         }
-        
-        context.drawTextWithShadow(textRenderer, descText, descStartX, descriptionY, descriptionColor);
 
         // Count items in category (moved to right side near arrow)
         int itemCount = elements.size();
         if (itemCount > 0) {
             String countText = itemCount + " item" + (itemCount == 1 ? "" : "s");
-            int countColor = 0xFF888888;
+            int countColor = theme != null ? theme.getTextColorSecondary() : 0xFF888888;
             int countWidth = textRenderer.getWidth(countText);
             context.drawTextWithShadow(textRenderer, countText, getX() + width - 60 - countWidth, getY() + height/2 - textRenderer.fontHeight/2, countColor);
         }
@@ -165,9 +171,10 @@ public class ModernCategory extends ClickableWidget {
         int arrowBaseX = getX() + width - 40;
         int arrowBaseY = getY() + height / 2;
         
+        int accent = theme != null ? theme.getAccentColor() : 0x4A90E2;
         // Arrow colors with animation
         int arrowAlpha = (int)(128 + hoverProgress * 127);
-        int arrowColor = (arrowAlpha << 24) | interpolateColor(0xAAAAAA, 0x4A90E2, hoverProgress);
+        int arrowColor = (arrowAlpha << 24) | interpolateColor(0xAAAAAA, accent, hoverProgress);
         
         // Arrow size and animation
         int baseSize = 8;
@@ -199,7 +206,7 @@ public class ModernCategory extends ClickableWidget {
         // Add subtle glow effect around arrow when hovered
         if (hoverProgress > 0) {
             int glowAlpha = (int)(hoverProgress * 40);
-            int glowColor = (glowAlpha << 24) | 0x4A90E2;
+            int glowColor = (glowAlpha << 24) | (accent & 0xFFFFFF);
             
             // Glow around arrow
             RenderUtil.drawRoundedRect(context, 
@@ -211,6 +218,44 @@ public class ModernCategory extends ClickableWidget {
                 glowColor
             );
         }
+    }
+
+    /** Wrap description into 1 or 2 lines; only add "..." if the second line would still overflow. */
+    private static String[] wrapDescriptionToTwoLines(TextRenderer textRenderer, String text, int maxDescWidth) {
+        if (text == null || text.isEmpty()) {
+            return new String[] { "" };
+        }
+        if (textRenderer.getWidth(text) <= maxDescWidth) {
+            return new String[] { text };
+        }
+        // Find break for first line: prefer last space before we exceed maxDescWidth
+        int breakAt = 0;
+        int lastSpace = -1;
+        for (int i = 0; i < text.length(); i++) {
+            if (text.charAt(i) == ' ') {
+                lastSpace = i;
+            }
+            if (textRenderer.getWidth(text.substring(0, i + 1)) > maxDescWidth) {
+                breakAt = lastSpace > 0 ? lastSpace : i;
+                break;
+            }
+            breakAt = i + 1;
+        }
+        String line1 = text.substring(0, breakAt).trim();
+        String rest = text.substring(breakAt).trim();
+        if (rest.isEmpty()) {
+            return new String[] { line1 };
+        }
+        if (textRenderer.getWidth(rest) <= maxDescWidth) {
+            return new String[] { line1, rest };
+        }
+        // Second line still too long – truncate with "..."
+        String line2 = rest;
+        while (line2.length() > 0 && textRenderer.getWidth(line2 + "...") > maxDescWidth) {
+            line2 = line2.substring(0, line2.length() - 1);
+        }
+        line2 += "...";
+        return new String[] { line1, line2 };
     }
 
     private int interpolateColor(int color1, int color2, float factor) {

@@ -12,6 +12,9 @@
   "entrypoints": {
     "client": [
       "app.qwertz.modernconfig.ModernConfigMod"
+    ],
+    "modmenu": [
+      "app.qwertz.modernconfig.ModMenuEntryPoint"
     ]
   },
   "mixins": [

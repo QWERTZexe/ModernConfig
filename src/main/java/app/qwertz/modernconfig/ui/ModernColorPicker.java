@@ -1,12 +1,13 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
-import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,6 +34,8 @@ public class ModernColorPicker extends ClickableWidget {
     private static final int SWATCH_SIZE = 20;
     private static final int COLLAPSED_HEIGHT = 30;
     private static final int EXPANDED_HEIGHT = PICKER_HEIGHT + 50; // picker + padding + preview
+    /** Min width so expanded picker content isn't clipped (picker + hue bar + padding + preview). */
+    private static final int EXPANDED_CONTENT_WIDTH = PICKER_WIDTH + HUE_BAR_WIDTH + 50;
     
     // Performance optimization - cache rendered gradients
     private int[][] saturationBrightnessCache;
@@ -42,15 +45,26 @@ public class ModernColorPicker extends ClickableWidget {
     // Hex input field
     private ModernString hexInput;
     private boolean isTypingHex = false;
+    private final ModernConfigTheme theme;
     
+    // Expand/collapse animation (0 = collapsed, 1 = expanded)
+    private float expandProgress = 0.0f;
+    private long lastExpandTime = System.currentTimeMillis();
+
     // Static list to track all color pickers for global collapse
     private static final List<ModernColorPicker> allColorPickers = new ArrayList<>();
     
     public ModernColorPicker(int x, int y, int width, int height, Text message, 
                             int currentColor, Consumer<Integer> onColorChanged) {
+        this(x, y, width, height, message, currentColor, onColorChanged, null);
+    }
+    
+    public ModernColorPicker(int x, int y, int width, int height, Text message, 
+                            int currentColor, Consumer<Integer> onColorChanged, ModernConfigTheme theme) {
         super(x, y, width, height, message);
         this.currentColor = currentColor;
         this.onColorChanged = onColorChanged;
+        this.theme = theme;
         updateHSVFromColor();
         
         // Initialize caches for performance (much smaller cache, scaled up when rendering)
@@ -58,9 +72,9 @@ public class ModernColorPicker extends ClickableWidget {
         hueBarCache = new int[HUE_BAR_HEIGHT / 4];
         
         // Initialize hex input
-        hexInput = new ModernString(0, 0, 80, 20, 
+        hexInput = new ModernString(0, 0, 90, 20,
             Text.literal("Hex"), String.format("#%06X", currentColor),
-            value -> onHexInputChanged(value), 7);
+            value -> onHexInputChanged(value), 7, theme);
         
         // Pre-calculate hue bar once (never changes)
         precalculateHueBar();
@@ -76,7 +90,16 @@ public class ModernColorPicker extends ClickableWidget {
     
     @Override
     public int getHeight() {
-        return isExpanded ? EXPANDED_HEIGHT : COLLAPSED_HEIGHT;
+        float eased = RenderUtil.easeInOutQuad(expandProgress);
+        return COLLAPSED_HEIGHT + (int) ((EXPANDED_HEIGHT - COLLAPSED_HEIGHT) * eased);
+    }
+    
+    public int getMainHeight() {
+        return COLLAPSED_HEIGHT;
+    }
+    
+    public boolean isExpanded() {
+        return isExpanded;
     }
     
     private void updateHSVFromColor() {
@@ -141,42 +164,63 @@ public class ModernColorPicker extends ClickableWidget {
     
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        long currentTime = System.currentTimeMillis();
+        int durationMs = Math.max(1, ModernConfigSettings.getAnimationDurationMs());
+        float deltaTime = (currentTime - lastExpandTime) / (float) durationMs;
+        lastExpandTime = currentTime;
+
+        float oldExpandProgress = expandProgress;
+        if (isExpanded) {
+            expandProgress = Math.min(1.0f, expandProgress + deltaTime);
+        } else {
+            expandProgress = Math.max(0.0f, expandProgress - deltaTime);
+        }
+        if (Math.abs(oldExpandProgress - expandProgress) > 0.01f) {
+            updateParentLayout();
+        }
+
         // Draw label
         String labelText = getMessage().getString();
-        
-        int textColor = 0xFFFFFFFF;
+        int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, labelText + ":", getX(), getY() - 2, textColor);
         
         // Draw color swatch button
         int swatchX = getX();
         int swatchY = getY() + 12;
         
-        // Background with border
+        // Hover outline first, outside only (then swatch drawn on top so outline doesn't overlap the color)
+        if (isHovered()) {
+            int hoverAlpha = theme != null ? (0x50 << 24) | (theme.getAccentColor() & 0xFFFFFF) : 0x40FFFFFF;
+            RenderUtil.drawRoundedRect(context, swatchX - 1, swatchY - 1, SWATCH_SIZE + 2, SWATCH_SIZE + 2, 4, hoverAlpha);
+        }
+        
+        // Background with border (neutral black), then color on top
         RenderUtil.drawRoundedRect(context, swatchX, swatchY, SWATCH_SIZE, SWATCH_SIZE, 3, 0xFF000000);
         RenderUtil.drawRoundedRect(context, swatchX + 1, swatchY + 1, SWATCH_SIZE - 2, SWATCH_SIZE - 2, 2, 0xFF000000 | currentColor);
         
-        // Hover effect
-        if (isHovered()) {
-            RenderUtil.drawRoundedRect(context, swatchX - 1, swatchY - 1, SWATCH_SIZE + 2, SWATCH_SIZE + 2, 4, 0x40FFFFFF);
-        }
-        
-        // Draw expand button
+        // Draw expand button (arrow)
         int expandX = swatchX + SWATCH_SIZE + 5;
         int expandY = swatchY + 2;
         String expandText = isExpanded ? "▲" : "▼";
-        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, expandText, expandX, expandY, 0xFFFFFFFF);
+        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, expandText, expandX, expandY, textColor);
         
         // Position and render hex input (always visible to the right)
         int hexInputX = expandX + 20;
         int hexInputY = swatchY - 2;
         hexInput.setX(hexInputX);
         hexInput.setY(hexInputY);
-        hexInput.setWidth(80);
+        hexInput.setWidth(90);
         hexInput.render(context, mouseX, mouseY, delta);
         
-        // Draw color picker if expanded
-        if (isExpanded) {
+        // Draw color picker with expand/collapse animation (clip to current height, same coords as container: y down)
+        if (expandProgress > 0.001f) {
+            int clipX = getX();
+            int clipY = getY();
+            int clipW = Math.max(getWidth(), EXPANDED_CONTENT_WIDTH);
+            int clipH = getHeight();
+            context.enableScissor(clipX, clipY, clipX + clipW, clipY + clipH);
             drawColorPicker(context, mouseX, mouseY, delta);
+            context.disableScissor();
         }
     }
     
@@ -236,13 +280,12 @@ public class ModernColorPicker extends ClickableWidget {
             }
         }
         
-        // Draw selection indicator
+        // Draw selection indicator (theme accent circle)
         int indicatorX = (int) (startX + saturation * PICKER_WIDTH);
         int indicatorY = (int) (startY + (1.0f - brightness) * PICKER_HEIGHT);
-        
-        // Draw white circle with black border
+        int accent = theme != null ? theme.getAccentColor() : 0xFFFFFFFF;
         RenderUtil.drawRoundedRect(context, indicatorX - 4, indicatorY - 4, 8, 8, 4, 0xFF000000);
-        RenderUtil.drawRoundedRect(context, indicatorX - 3, indicatorY - 3, 6, 6, 3, 0xFFFFFFFF);
+        RenderUtil.drawRoundedRect(context, indicatorX - 3, indicatorY - 3, 6, 6, 3, 0xFF000000 | (accent & 0xFFFFFF));
     }
     
     private void drawHueBar(DrawContext context, int startX, int startY) {
@@ -256,12 +299,11 @@ public class ModernColorPicker extends ClickableWidget {
             context.fill(startX, pixelY, startX + HUE_BAR_WIDTH, pixelY + blockSize, alpha | color);
         }
         
-        // Draw selection indicator
+        // Draw selection indicator (theme accent)
         int indicatorY = (int) (startY + hue * HUE_BAR_HEIGHT);
-        
-        // Draw white line with black border
+        int accent = theme != null ? theme.getAccentColor() : 0xFFFFFFFF;
         context.fill(startX - 2, indicatorY - 1, startX + HUE_BAR_WIDTH + 2, indicatorY + 1, 0xFF000000);
-        context.fill(startX - 1, indicatorY, startX + HUE_BAR_WIDTH + 1, indicatorY + 1, 0xFFFFFFFF);
+        context.fill(startX - 1, indicatorY, startX + HUE_BAR_WIDTH + 1, indicatorY + 1, 0xFF000000 | (accent & 0xFFFFFF));
     }
     
         @Override
@@ -448,6 +490,24 @@ public class ModernColorPicker extends ClickableWidget {
      */
     public void remove() {
         allColorPickers.remove(this);
+    }
+
+    /** Clear focus from the hex input so only one input has focus at a time. */
+    public void clearFocus() {
+        clearFocus(true);
+    }
+    
+    /** Clear focus with option to skip layout update (for batching). */
+    public void clearFocus(boolean updateLayout) {
+        if (hexInput != null) {
+            hexInput.setFocused(false);
+        }
+        if (isExpanded) {
+            isExpanded = false;
+            if (updateLayout) {
+                updateParentLayout();
+            }
+        }
     }
 
     @Override

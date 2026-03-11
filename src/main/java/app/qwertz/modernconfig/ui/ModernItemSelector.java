@@ -1,5 +1,7 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -10,7 +12,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +23,10 @@ public class ModernItemSelector extends ClickableWidget {
     private final List<Item> filteredItems;
     private Item selectedItem;
     private final Consumer<Item> onSelectionChange;
+    private final ModernConfigTheme theme;
     private boolean isExpanded = false;
     private float animationProgress = 0.0f;
     private float expandProgress = 0.0f;
-    private static final int ANIMATION_DURATION = 200; // milliseconds
     private long lastTime = System.currentTimeMillis();
     private final int optionHeight = 25;
     private final int maxVisibleOptions = 6;
@@ -34,9 +35,14 @@ public class ModernItemSelector extends ClickableWidget {
     private int searchCursorPosition = 0;
 
     public ModernItemSelector(int x, int y, int width, int height, Text text, Item defaultItem, Consumer<Item> onSelectionChange) {
+        this(x, y, width, height, text, defaultItem, onSelectionChange, null);
+    }
+
+    public ModernItemSelector(int x, int y, int width, int height, Text text, Item defaultItem, Consumer<Item> onSelectionChange, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.selectedItem = defaultItem;
         this.onSelectionChange = onSelectionChange;
+        this.theme = theme;
         
         // Get all registered items
         this.allItems = new ArrayList<>();
@@ -71,7 +77,7 @@ public class ModernItemSelector extends ClickableWidget {
     @Override
     public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / (float)ANIMATION_DURATION;
+        float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
 
         // Hover animation
@@ -105,21 +111,21 @@ public class ModernItemSelector extends ClickableWidget {
         RenderUtil.drawRoundedRect(context, getX(), getY(), getWidth(), mainHeight, 4, currentColor);
         
         // Draw label
+        int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (mainHeight - 8) / 2.0f;
         context.drawTextWithShadow(
             MinecraftClient.getInstance().textRenderer,
             getMessage(),
             getX() + 8,
             (int)textY,
-            0xFFFFFFFF
+            textColor
         );
         
         // Draw selected item
         if (selectedItem != null) {
             int itemX = getX() + getWidth() - 40;
             int itemY = getY() + (mainHeight - 16) / 2;
-            
-            // Draw item background
+            // Draw item background (neutral gray, not theme)
             RenderUtil.drawRoundedRect(context, itemX - 2, itemY - 2, 20, 20, 2, 0xFF444444);
             
             // Draw item
@@ -145,26 +151,34 @@ public class ModernItemSelector extends ClickableWidget {
         // Draw dropdown background
         RenderUtil.drawRoundedRect(context, getX(), dropdownY, getWidth(), dropdownHeight, 4, 0xFF2A2A2A);
         
-        // Draw search box
+        // Draw search box (outline with theme accent when focused)
         int searchY = dropdownY + 5;
         int searchHeight = 20;
         RenderUtil.drawRoundedRect(context, getX() + 5, searchY, getWidth() - 10, searchHeight, 2, 0xFF1A1A1A);
+        int searchOutline = theme != null ? theme.getAccentColor() : 0xFFFFFFFF;
+        if (isSearchFocused) {
+            RenderUtil.drawRoundedRect(context, getX() + 5, searchY, getWidth() - 10, 1, 0, (0x80 << 24) | (searchOutline & 0xFFFFFF));
+            RenderUtil.drawRoundedRect(context, getX() + 5, searchY + searchHeight - 1, getWidth() - 10, 1, 0, (0x80 << 24) | (searchOutline & 0xFFFFFF));
+            RenderUtil.drawRoundedRect(context, getX() + 5, searchY, 1, searchHeight, 0, (0x80 << 24) | (searchOutline & 0xFFFFFF));
+            RenderUtil.drawRoundedRect(context, getX() + getWidth() - 6, searchY, 1, searchHeight, 0, (0x80 << 24) | (searchOutline & 0xFFFFFF));
+        }
         
         // Draw search text
         String displayText = searchText.isEmpty() ? "Search items..." : searchText;
-        int textColor = searchText.isEmpty() ? 0xFF666666 : 0xFFFFFFFF;
+        int searchPlaceholderColor = theme != null ? theme.getTextColorSecondary() : 0xFF666666;
+        int searchTextColor = searchText.isEmpty() ? searchPlaceholderColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
         context.drawTextWithShadow(
             MinecraftClient.getInstance().textRenderer,
             displayText,
             getX() + 10,
             searchY + 6,
-            textColor
+            searchTextColor
         );
         
         // Draw cursor in search
         if (isSearchFocused && searchText.isEmpty()) {
             int cursorX = getX() + 10 + MinecraftClient.getInstance().textRenderer.getWidth("Search items...");
-            context.fill(cursorX, searchY + 6, cursorX + 1, searchY + 16, 0xFFFFFFFF);
+            context.fill(cursorX, searchY + 6, cursorX + 1, searchY + 16, searchOutline);
         }
         
         // Draw items
@@ -182,7 +196,7 @@ public class ModernItemSelector extends ClickableWidget {
                                mouseY >= itemY && mouseY <= itemY + itemHeight;
             boolean isSelected = item == selectedItem;
             
-            // Draw item background
+            // Draw item background (selected stays neutral gray, not theme)
             if (isHovered) {
                 RenderUtil.drawRoundedRect(context, getX() + 2, itemY, getWidth() - 4, itemHeight, 2, 0xFF3A3A3A);
             } else if (isSelected) {
@@ -199,7 +213,8 @@ public class ModernItemSelector extends ClickableWidget {
             String itemName = item.getName().getString();
             int nameX = iconX + 20;
             int nameY = itemY + (itemHeight - 8) / 2;
-            int nameColor = isSelected ? 0xFF88CC88 : 0xFFFFFFFF;
+            int selectedNameColor = theme != null ? (0xFF000000 | (theme.getAccentSecondary() & 0xFFFFFF)) : 0xFF88CC88;
+            int nameColor = isSelected ? selectedNameColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
             context.drawTextWithShadow(
                 MinecraftClient.getInstance().textRenderer,
                 itemName,
@@ -211,7 +226,7 @@ public class ModernItemSelector extends ClickableWidget {
     }
 
     private void drawArrow(DrawContext context, int x, int y, boolean isExpanded, float progress) {
-        int color = 0xFFAAAAAA;
+        int color = theme != null ? theme.getAccentColor() : 0xFFAAAAAA;
         
         if (isExpanded) {
             // Up arrow
@@ -325,8 +340,8 @@ public class ModernItemSelector extends ClickableWidget {
 
     @Override
     public int getHeight() {
-        // Return expanded height for layout system to move other widgets down
-        if (isExpanded && expandProgress > 0.0f) {
+        // Use expandProgress (not isExpanded) so layout animates on collapse too; items below move up in sync
+        if (expandProgress > 0.001f) {
             return getMainHeight() + 2 + (int)((maxVisibleOptions * optionHeight + 35) * expandProgress);
         }
         return getMainHeight();
@@ -349,6 +364,11 @@ public class ModernItemSelector extends ClickableWidget {
         } catch (Exception e) {
             // Silently ignore if we can't update layout
         }
+    }
+
+    /** Clear search focus so only one input has focus at a time. */
+    public void clearFocus() {
+        isSearchFocused = false;
     }
 
     @Override

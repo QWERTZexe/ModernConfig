@@ -1,13 +1,14 @@
 package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.*;
+import app.qwertz.modernconfig.config.ModernConfigSettings;
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.text.Text;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.util.Identifier;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -16,12 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-import java.util.Arrays;
 
 public class ConfigScreen extends Screen {
     private float openProgress = 0.0f;
     private float transitionProgress = 1.0f;
-    private static final int ANIMATION_DURATION = 200; // milliseconds
     private long lastTime = System.currentTimeMillis();
     private boolean closing = false;
     private ModernContainer mainContainer;
@@ -29,19 +28,23 @@ public class ConfigScreen extends Screen {
     private ModernContainer previousContainer = null;
     private boolean isTransitioningBack = false;
     private final List<String> currentPath = new ArrayList<>();
-    private final String modId;
-    private final Map<String, Object> config;
+    private String modId;
+    private Map<String, Object> config;
+    private ModernConfigTheme theme;
 
     public ConfigScreen() {
         super(Text.literal("ModernConfig Settings"));
         this.modId = null;
         this.config = null;
+        this.theme = null;
     }
 
     public ConfigScreen(String modId) {
         super(Text.literal(modId + " Settings"));
         this.modId = modId.toLowerCase();
         this.config = ConfigManager.getConfig(modId);
+        ConfigManager.ModInfo modInfo = ConfigManager.getModInfo(modId);
+        this.theme = modInfo != null ? modInfo.getTheme() : null;
     }
 
     @Override
@@ -57,7 +60,8 @@ public class ConfigScreen extends Screen {
             this.width / 2 - width / 2,
             50,
             width,
-            height
+            height,
+            theme
         );
 
         // Set container title and setup
@@ -71,7 +75,8 @@ public class ConfigScreen extends Screen {
             ModernButton backButton = new ModernButton(
                 0, 0, 100, 20,
                 Text.literal("Back"),
-                () -> navigateBack()
+                () -> navigateBack(),
+                theme
             );
             container.addElement(backButton, new ModernContainer.LayoutOptions().setSpanColumns(1));
         }
@@ -83,14 +88,26 @@ public class ConfigScreen extends Screen {
             addModConfigToContainer(container, width);
         }
 
-        // Add done button only on root windows (mod list or mod's root config)
+        // Add done/close/back button only on root windows (mod list or mod's root config)
         if (currentPath.isEmpty()) {
-            ModernButton doneButton = new ModernButton(
-                0, 0, 100, 20,
-                Text.literal("Done"),
-                this::closeScreen
-            );
-            container.addElement(doneButton, new ModernContainer.LayoutOptions().setSpanColumns(1));
+            if (modId == null) {
+                ModernButton doneButton = new ModernButton(
+                    0, 0, 100, 20,
+                    Text.literal("Done"),
+                    this::closeScreen,
+                    theme
+                );
+                container.addElement(doneButton, new ModernContainer.LayoutOptions().setSpanColumns(1));
+            } else {
+                boolean useBack = "Back".equals(ModernConfigSettings.getModTopExitButton());
+                ModernButton exitButton = new ModernButton(
+                    0, 0, 100, 20,
+                    Text.literal(useBack ? "Back" : "Close"),
+                    useBack ? this::navigateBackToMainMenu : this::closeScreen,
+                    theme
+                );
+                container.addElement(exitButton, new ModernContainer.LayoutOptions().setSpanColumns(1));
+            }
         }
 
         return container;
@@ -118,6 +135,7 @@ public class ConfigScreen extends Screen {
             String displayName = modInfo != null ? modInfo.getName() : formatModName(modId);
             String description = modInfo != null ? modInfo.getDescription() : "Configure " + formatModName(modId);
             
+            String modIdToOpen = modId;
             ModernCategory modButton;
             if (modInfo != null && modInfo.getIcon() != null) {
                 modButton = new ModernCategory(
@@ -125,14 +143,28 @@ public class ConfigScreen extends Screen {
                     Text.literal(displayName),
                     Text.literal(description),
                     modInfo.getIcon(),
-                    button -> MinecraftClient.getInstance().setScreen(new ConfigScreen(modId))
+                    button -> {
+                        Screen screen = MinecraftClient.getInstance().currentScreen;
+                        if (screen instanceof ConfigScreen configScreen) {
+                            configScreen.navigateToMod(modIdToOpen);
+                        } else {
+                            MinecraftClient.getInstance().setScreen(new ConfigScreen(modIdToOpen));
+                        }
+                    }
                 );
             } else {
                 modButton = new ModernCategory(
                     0, 0, width - 24, 60,
                     Text.literal(displayName),
                     Text.literal(description),
-                    button -> MinecraftClient.getInstance().setScreen(new ConfigScreen(modId))
+                    button -> {
+                        Screen screen = MinecraftClient.getInstance().currentScreen;
+                        if (screen instanceof ConfigScreen configScreen) {
+                            configScreen.navigateToMod(modIdToOpen);
+                        } else {
+                            MinecraftClient.getInstance().setScreen(new ConfigScreen(modIdToOpen));
+                        }
+                    }
                 );
             }
             container.addElement(modButton, new ModernContainer.LayoutOptions().setFullWidth(true));
@@ -153,11 +185,12 @@ public class ConfigScreen extends Screen {
                         0, 0, width - 24, 60,
                         Text.literal(categoryInfo.getTitle()),
                         Text.literal(categoryInfo.getDescription()),
+                        theme,
                         category -> navigateToCategory(entry.getKey())
                     );
                     container.addElement(categoryButton, new ModernContainer.LayoutOptions().setFullWidth(true));
                 } else if (entry.getValue() instanceof ConfigOption<?> opt) {
-                    addOptionToContainer(container, opt);
+                    addOptionToContainer(container, opt, theme);
                 }
             }
         }
@@ -183,7 +216,7 @@ public class ConfigScreen extends Screen {
         return current;
     }
 
-    private void addOptionToContainer(ModernContainer container, ConfigOption<?> opt) {
+    private void addOptionToContainer(ModernContainer container, ConfigOption<?> opt, ModernConfigTheme theme) {
         if (opt instanceof SliderConfigOption sliderOpt) {
             ModernSlider slider = new ModernSlider(
                 0, 0, 200, 30,
@@ -195,7 +228,8 @@ public class ConfigScreen extends Screen {
                 newVal -> {
                     sliderOpt.setValue(newVal);
                     // Update value immediately for visual feedback
-                }
+                },
+                theme
             ).setOnDragComplete(newVal -> {
                 // Save only when dragging is complete
                 ConfigManager.save();
@@ -205,7 +239,8 @@ public class ConfigScreen extends Screen {
             ModernListWidget listWidget = new ModernListWidget(
                 0, 0, 200,
                 listOpt,
-                Text.literal(listOpt.getDescription())
+                Text.literal(listOpt.getDescription()),
+                theme
             );
             container.addElement(listWidget, new ModernContainer.LayoutOptions().setFullWidth(true));
         } else if (opt instanceof ColorConfigOption colorOpt) {
@@ -216,7 +251,8 @@ public class ConfigScreen extends Screen {
                 newVal -> {
                     colorOpt.setValue(newVal);
                     // Update value immediately for visual feedback
-                }
+                },
+                theme
             ).setOnColorComplete(newVal -> {
                 // Save only when color selection is complete
                 ConfigManager.save();
@@ -231,7 +267,8 @@ public class ConfigScreen extends Screen {
                 newIndex -> {
                     dropdownOpt.setSelectedIndex(newIndex);
                     ConfigManager.save();
-                }
+                },
+                theme
             );
             container.addElement(dropdown, new ModernContainer.LayoutOptions().setFullWidth(true));
         } else if (opt instanceof ItemConfigOption itemOpt) {
@@ -249,7 +286,8 @@ public class ConfigScreen extends Screen {
                 newItem -> {
                     itemOpt.setValue(Registries.ITEM.getId(newItem));
                     ConfigManager.save();
-                }
+                },
+                theme
             );
             container.addElement(itemSelector, new ModernContainer.LayoutOptions().setFullWidth(true));
         } else if (opt.getDefaultValue() instanceof Boolean bool) {
@@ -260,7 +298,8 @@ public class ConfigScreen extends Screen {
                         newVal -> {
                             ((ConfigOption<Boolean>) opt).setValue(newVal);
                             ConfigManager.save();
-                        }
+                        },
+                        theme
                 );
             container.addElement(toggle, new ModernContainer.LayoutOptions().setFullWidth(true));
         } else if (opt.getDefaultValue() instanceof String) {
@@ -271,7 +310,9 @@ public class ConfigScreen extends Screen {
                 newVal -> {
                     ((ConfigOption<String>) opt).setValue(newVal);
                     ConfigManager.save();
-                }
+                },
+                32,
+                theme
             );
             container.addElement(stringInput, new ModernContainer.LayoutOptions().setFullWidth(true));
         }
@@ -289,12 +330,34 @@ public class ConfigScreen extends Screen {
     private void navigateBack() {
         if (!currentPath.isEmpty()) {
             currentPath.remove(currentPath.size() - 1);
-            ModernContainer newContainer = createContainerForPath(mainContainer.getWidth(), mainContainer.getHeight());
             previousContainer = containerStack.pop();
-            containerStack.push(newContainer);
             transitionProgress = 0.0f;
             isTransitioningBack = true;
         }
+    }
+
+    /** Navigate from main menu into a mod's config (same screen, swipe transition). */
+    public void navigateToMod(String newModId) {
+        if (newModId == null) return;
+        this.modId = newModId.toLowerCase();
+        this.config = ConfigManager.getConfig(modId);
+        ConfigManager.ModInfo modInfo = ConfigManager.getModInfo(modId);
+        this.theme = modInfo != null ? modInfo.getTheme() : null;
+        previousContainer = containerStack.peek();
+        ModernContainer newContainer = createContainerForPath(mainContainer.getWidth(), mainContainer.getHeight());
+        containerStack.push(newContainer);
+        transitionProgress = 0.0f;
+        isTransitioningBack = false;
+    }
+
+    /** Navigate from mod root back to main menu (same screen, swipe transition). */
+    public void navigateBackToMainMenu() {
+        this.modId = null;
+        this.config = null;
+        this.theme = null;
+        previousContainer = containerStack.pop();
+        transitionProgress = 0.0f;
+        isTransitioningBack = true;
     }
 
     private void closeScreen() {
@@ -308,8 +371,9 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        int animationDuration = ModernConfigSettings.getAnimationDurationMs();
         long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastTime) / (float)ANIMATION_DURATION;
+        float deltaTime = (currentTime - lastTime) / (float)animationDuration;
         lastTime = currentTime;
 
         if (closing) {
@@ -396,14 +460,15 @@ public class ConfigScreen extends Screen {
             currentContainer.render(context, mouseX, mouseY, delta);
         }
         
-        // Draw developer credit below the container
-        String creditText = "ModernConfig - Developed by QWERTZ";
-        int textWidth = textRenderer.getWidth(creditText);
-        int creditX = width / 2 - textWidth / 2;
-        int creditY = baseY + currentContainer.getHeight() + 10;
-        
-        int creditColor = RenderUtil.applyAlpha(0xFFAAAAAA, easedProgress * 0.8f);
-        context.drawTextWithShadow(textRenderer, creditText, creditX, creditY, creditColor);
+        // Draw developer credit below the container (if enabled in settings)
+        if (ModernConfigSettings.isShowCredit()) {
+            String creditText = "ModernConfig - Developed by QWERTZ";
+            int textWidth = textRenderer.getWidth(creditText);
+            int creditX = width / 2 - textWidth / 2;
+            int creditY = baseY + currentContainer.getHeight() + 10;
+            int creditColor = RenderUtil.applyAlpha(0xFFAAAAAA, easedProgress * 0.8f);
+            context.drawTextWithShadow(textRenderer, creditText, creditX, creditY, creditColor);
+        }
     }
 
     @Override

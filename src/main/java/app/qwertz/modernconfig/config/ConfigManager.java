@@ -1,6 +1,8 @@
 package app.qwertz.modernconfig.config;
 
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import com.google.gson.*;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import java.io.*;
 import java.nio.file.*;
@@ -15,17 +17,27 @@ public class ConfigManager {
         private final String name;
         private final String description;
         private final Identifier icon;
+        private final ModernConfigTheme theme;
         
         public ModInfo(String name, String description) {
             this.name = name;
             this.description = description;
             this.icon = null;
+            this.theme = null;
         }
         
         public ModInfo(String name, String description, Identifier icon) {
             this.name = name;
             this.description = description;
             this.icon = icon;
+            this.theme = null;
+        }
+        
+        public ModInfo(String name, String description, Identifier icon, ModernConfigTheme theme) {
+            this.name = name;
+            this.description = description;
+            this.icon = icon;
+            this.theme = theme;
         }
         
         public String getName() {
@@ -39,18 +51,25 @@ public class ConfigManager {
         public Identifier getIcon() {
             return icon;
         }
+        
+        public ModernConfigTheme getTheme() {
+            return theme;
+        }
     }
     
     private static final Map<String, Map<String, Object>> MOD_CONFIGS = new HashMap<>();
     private static final Map<String, ModInfo> MOD_INFO = new HashMap<>();
-    private static final Map<String, String> CONFIG_PATHS = new HashMap<>();
     private static final Map<String, ModernConfig> MOD_CONFIG_INSTANCES = new HashMap<>();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    /** Resolve config file path using Fabric's config directory so save/load persist across restarts. */
+    private static Path getConfigPath(String modId) {
+        return FabricLoader.getInstance().getConfigDir().resolve(modId + ".json");
+    }
 
     public static void registerConfig(String modId, Map<String, Object> config) {
         modId = modId.toLowerCase();
         MOD_CONFIGS.put(modId, config);
-        CONFIG_PATHS.put(modId, "config/" + modId + ".json");
         load();
     }
 
@@ -58,7 +77,6 @@ public class ConfigManager {
         modId = modId.toLowerCase();
         MOD_CONFIGS.put(modId, config);
         MOD_INFO.put(modId, new ModInfo(name, description));
-        CONFIG_PATHS.put(modId, "config/" + modId + ".json");
         load();
     }
 
@@ -66,42 +84,50 @@ public class ConfigManager {
         modId = modId.toLowerCase();
         MOD_CONFIGS.put(modId, config);
         MOD_INFO.put(modId, new ModInfo(name, description, icon));
-        CONFIG_PATHS.put(modId, "config/" + modId + ".json");
         load();
     }
 
-    public static void load() {
-        for (String modId : MOD_CONFIGS.keySet()) {
-            String configPath = CONFIG_PATHS.get(modId);
-            if (configPath == null) continue;
+    public static void registerConfig(String modId, String name, String description, Identifier icon, ModernConfigTheme theme, Map<String, Object> config) {
+        modId = modId.toLowerCase();
+        MOD_CONFIGS.put(modId, config);
+        MOD_INFO.put(modId, new ModInfo(name, description, icon, theme));
+        load();
+    }
 
-            Path path = Paths.get(configPath);
-            if (Files.exists(path)) {
-                try (Reader reader = Files.newBufferedReader(path)) {
-                    JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-                    Map<String, Object> config = MOD_CONFIGS.get(modId);
-                    if (config != null) {
-                        loadOptionsRecursive(json, config);
+    /** True during load - prevents setValue from triggering save and overwriting the file with partial/defaults. */
+    static boolean isLoading = false;
+
+    public static void load() {
+        isLoading = true;
+        try {
+            for (String modId : MOD_CONFIGS.keySet()) {
+                Path path = getConfigPath(modId);
+                if (Files.exists(path)) {
+                    try (Reader reader = Files.newBufferedReader(path)) {
+                        JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                        Map<String, Object> config = MOD_CONFIGS.get(modId);
+                        if (config != null) {
+                            loadOptionsRecursive(json, config);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
             }
+        } finally {
+            isLoading = false;
         }
     }
 
     public static void save() {
         for (Map.Entry<String, Map<String, Object>> entry : MOD_CONFIGS.entrySet()) {
             String modId = entry.getKey();
-            String configPath = CONFIG_PATHS.get(modId);
-            if (configPath == null) continue;
-
             Map<String, Object> config = entry.getValue();
             JsonObject json = new JsonObject();
             saveOptionsRecursive(json, config);
 
             try {
-                Path path = Paths.get(configPath);
+                Path path = getConfigPath(modId);
                 Files.createDirectories(path.getParent());
                 try (Writer writer = Files.newBufferedWriter(path)) {
                     GSON.toJson(json, writer);

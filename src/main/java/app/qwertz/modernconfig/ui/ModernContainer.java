@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -26,12 +27,18 @@ public class ModernContainer {
     private boolean isDraggingScrollbar = false;
     private static final int SCROLLBAR_WIDTH = 6;
     private static final int SCROLLBAR_PADDING = 2;
+    private final ModernConfigTheme theme;
 
     public ModernContainer(int x, int y, int width, int height) {
+        this(x, y, width, height, null);
+    }
+
+    public ModernContainer(int x, int y, int width, int height, ModernConfigTheme theme) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.theme = theme;
         this.currentY = y + padding;
     }
 
@@ -141,9 +148,9 @@ public class ModernContainer {
             }
         }
 
-        // Update total content height
+        // Update total content height (+2 so last element doesn't touch bottom when scrolled)
         int oldContentHeight = contentHeight;
-        contentHeight = currentY - startY + maxHeightInRow;
+        contentHeight = currentY - startY + maxHeightInRow + padding;
         
         // Clamp scroll offset if content height decreased (e.g., when color picker collapses)
         boolean scrollChanged = false;
@@ -201,13 +208,15 @@ public class ModernContainer {
 
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         // Draw container background
-        int backgroundColor = (int)(alpha * 255) << 24 | 0x202020;
+        int bg = theme != null ? theme.getContainerBackground() : 0x202020;
+        int backgroundColor = (int)(alpha * 255) << 24 | (bg & 0xFFFFFF);
         RenderUtil.drawRoundedRect(context, x, y, width, height, 8, backgroundColor);
         
-        // Draw container outline
-        int outlineColor = (int)(alpha * 64) << 24 | 0xFFFFFF;
-        RenderUtil.drawRoundedRect(context, x, y, width, 1, 0, outlineColor);
-        RenderUtil.drawRoundedRect(context, x, y + height - 1, width, 1, 0, outlineColor);
+        // Draw container outline (top/bottom one pixel outside so content doesn't overlap)
+        int outlineRgb = theme != null ? (theme.getContainerOutline() & 0xFFFFFF) : 0xFFFFFF;
+        int outlineColor = (int)(alpha * 64) << 24 | outlineRgb;
+        RenderUtil.drawRoundedRect(context, x, y - 1, width, 1, 0, outlineColor);
+        RenderUtil.drawRoundedRect(context, x, y + height, width, 1, 0, outlineColor);
         RenderUtil.drawRoundedRect(context, x, y, 1, height, 0, outlineColor);
         RenderUtil.drawRoundedRect(context, x + width - 1, y, 1, height, 0, outlineColor);
 
@@ -216,7 +225,8 @@ public class ModernContainer {
 
         // Draw title if present
         if (title != null) {
-            int titleColor = (int)(alpha * 255) << 24 | 0xFFFFFF;
+            int titleRgb = theme != null ? (theme.getTextColor() & 0xFFFFFF) : 0xFFFFFF;
+            int titleColor = (int)(alpha * 255) << 24 | titleRgb;
             context.drawTextWithShadow(
                 net.minecraft.client.MinecraftClient.getInstance().textRenderer,
                 title,
@@ -254,7 +264,8 @@ public class ModernContainer {
             );
 
             // Draw scrollbar handle
-            int scrollbarColor = (int)(alpha * 160) << 24 | 0xFFFFFF;
+            int scrollbarRgb = theme != null ? theme.getAccentColor() : 0xFFFFFF;
+            int scrollbarColor = (int)(alpha * 160) << 24 | (scrollbarRgb & 0xFFFFFF);
             RenderUtil.drawRoundedRect(context,
                 x + width - SCROLLBAR_WIDTH - SCROLLBAR_PADDING,
                 (int) scrollbarY,
@@ -278,17 +289,137 @@ public class ModernContainer {
             }
         }
 
-        // Check child elements
-        for (Element child : children) {
+        // First, find which child widget the click is targeting (if any)
+        // Two-pass approach: first check all main areas, then check expanded areas
+        // This ensures widgets' main buttons are prioritized over expanded areas
+        Element targetChild = null;
+        Element targetChildExpanded = null;
+        
+        // Pass 1: Check all main widget areas (non-expanded) in reverse order
+        for (int i = children.size() - 1; i >= 0; i--) {
+            Element child = children.get(i);
             if (child instanceof ClickableWidget widget) {
-                if (widget.getY() + widget.getHeight() >= y && widget.getY() <= y + height) {
-                    if (child.mouseClicked(mouseX, mouseY, button)) {
-                        return true;
+                int mainHeight = widget.getHeight();
+                // Use getMainHeight() for widgets that can expand
+                if (child instanceof ModernDropdown dropdown) {
+                    mainHeight = dropdown.getMainHeight();
+                } else if (child instanceof ModernColorPicker picker) {
+                    mainHeight = picker.getMainHeight();
+                } else if (child instanceof ModernListWidget listW) {
+                    mainHeight = listW.getMainHeight();
+                }
+                
+                boolean inMainArea = widget.getY() + mainHeight >= y && widget.getY() <= y + height &&
+                                   mouseX >= widget.getX() && mouseX <= widget.getX() + widget.getWidth() &&
+                                   mouseY >= widget.getY() && mouseY <= widget.getY() + mainHeight;
+                
+                if (inMainArea) {
+                    targetChild = child;
+                    break; // Found a widget whose main area contains the click
+                }
+            }
+        }
+        
+        // Pass 2: Only if no main area match, check expanded areas (and only for actually expanded widgets)
+        if (targetChild == null) {
+            for (int i = children.size() - 1; i >= 0; i--) {
+                Element child = children.get(i);
+                if (child instanceof ClickableWidget widget) {
+                    int mainHeight = widget.getHeight();
+                    boolean isExpanded = false;
+                    
+                    if (child instanceof ModernDropdown dropdown) {
+                        mainHeight = dropdown.getMainHeight();
+                        isExpanded = dropdown.isExpanded();
+                    } else if (child instanceof ModernColorPicker picker) {
+                        mainHeight = picker.getMainHeight();
+                        isExpanded = picker.isExpanded();
+                    } else if (child instanceof ModernListWidget listW) {
+                        mainHeight = listW.getMainHeight();
+                        isExpanded = listW.isExpanded();
+                    }
+                    
+                    // Only check expanded area if widget is actually expanded
+                    if (isExpanded) {
+                        int expandedHeight = widget.getHeight();
+                        if (expandedHeight > mainHeight) {
+                            boolean inExpandedArea = widget.getY() + expandedHeight >= y && widget.getY() <= y + height &&
+                                                   mouseX >= widget.getX() && mouseX <= widget.getX() + widget.getWidth() &&
+                                                   mouseY >= widget.getY() + mainHeight && mouseY <= widget.getY() + expandedHeight;
+                            
+                            if (inExpandedArea) {
+                                targetChildExpanded = child;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (targetChildExpanded != null) {
+                targetChild = targetChildExpanded;
+            }
+        }
+
+        // Clear focus from all OTHER focusable children (not the target), so only the clicked one gets focus
+        // Collect widgets that need layout updates, then update once at the end
+        boolean needsLayoutUpdate = false;
+        for (Element child : children) {
+            if (child == targetChild) continue; // Skip the target - it will handle its own focus
+            
+            if (child instanceof ModernString s) {
+                s.setFocused(false);
+            } else if (child instanceof ModernListWidget w) {
+                if (w.isExpanded()) {
+                    w.clearFocus(false);
+                    needsLayoutUpdate = true;
+                } else {
+                    w.clearFocus(false);
+                }
+            } else if (child instanceof ModernColorPicker p) {
+                if (p.isExpanded()) {
+                    p.clearFocus(false); // Don't update layout yet
+                    needsLayoutUpdate = true;
+                } else {
+                    p.clearFocus(false);
+                }
+            } else if (child instanceof ModernItemSelector i) {
+                i.clearFocus();
+            } else if (child instanceof ModernDropdown d) {
+                if (d.isExpanded()) {
+                    d.clearFocus(false); // Don't update layout yet
+                    needsLayoutUpdate = true;
+                } else {
+                    d.clearFocus(false);
+                }
+            }
+        }
+
+        // Process the click FIRST (before layout updates) so coordinates are still correct
+        boolean clickHandled = false;
+        if (targetChild != null && targetChild instanceof ClickableWidget widget) {
+            clickHandled = widget.mouseClicked(mouseX, mouseY, button);
+        } else {
+            // No specific target found, check all children (fallback)
+            for (Element child : children) {
+                if (child instanceof ClickableWidget widget) {
+                    if (widget.getY() + widget.getHeight() >= y && widget.getY() <= y + height) {
+                        if (child.mouseClicked(mouseX, mouseY, button)) {
+                            clickHandled = true;
+                            break;
+                        }
                     }
                 }
             }
         }
-        return false;
+        
+        // Update layout AFTER processing click (if any widget was collapsed)
+        // This way the click uses correct coordinates before widgets move
+        if (needsLayoutUpdate) {
+            updateLayout();
+        }
+        
+        return clickHandled;
     }
 
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
