@@ -11,6 +11,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -470,18 +473,18 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return containerStack.peek().mouseClicked(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        return containerStack.peek().mouseClicked(event, doubled) || super.mouseClicked(event, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        return containerStack.peek().mouseReleased(mouseX, mouseY, button) || super.mouseReleased(mouseX, mouseY, button);
+    public boolean mouseReleased(MouseButtonEvent event) {
+        return containerStack.peek().mouseReleased(event) || super.mouseReleased(event);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        return containerStack.peek().mouseDragged(mouseX, mouseY, button, deltaX, deltaY) || super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    public boolean mouseDragged(MouseButtonEvent event, double offsetX, double offsetY) {
+        return containerStack.peek().mouseDragged(event, offsetX, offsetY) || super.mouseDragged(event, offsetX, offsetY);
     }
 
     @Override
@@ -490,53 +493,53 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
         ModernContainer currentContainer = containerStack.peek();
         for (var child : currentContainer.children()) {
             if (child instanceof ModernString stringInput) {
-                if (stringInput.keyPressed(keyCode, scanCode, modifiers)) {
+                if (stringInput.keyPressed(event)) {
                     return true;
                 }
             } else if (child instanceof ModernListWidget listWidget) {
-                if (listWidget.keyPressed(keyCode, scanCode, modifiers)) {
+                if (listWidget.keyPressed(event)) {
                     return true;
                 }
             } else if (child instanceof ModernColorPicker colorPicker) {
-                if (colorPicker.keyPressed(keyCode, scanCode, modifiers)) {
+                if (colorPicker.keyPressed(event)) {
                     return true;
                 }
             } else if (child instanceof ModernItemSelector itemSelector) {
-                if (itemSelector.keyPressed(keyCode, scanCode, modifiers)) {
+                if (itemSelector.keyPressed(event)) {
                     return true;
                 }
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         ModernContainer currentContainer = containerStack.peek();
         for (var child : currentContainer.children()) {
             if (child instanceof ModernString stringInput) {
-                if (stringInput.charTyped(chr, modifiers)) {
+                if (stringInput.charTyped(event)) {
                     return true;
                 }
             } else if (child instanceof ModernListWidget listWidget) {
-                if (listWidget.charTyped(chr, modifiers)) {
+                if (listWidget.charTyped(event)) {
                     return true;
                 }
             } else if (child instanceof ModernColorPicker colorPicker) {
-                if (colorPicker.charTyped(chr, modifiers)) {
+                if (colorPicker.charTyped(event)) {
                     return true;
                 }
             } else if (child instanceof ModernItemSelector itemSelector) {
-                if (itemSelector.charTyped(chr, modifiers)) {
+                if (itemSelector.charTyped(event)) {
                     return true;
                 }
             }
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(event);
     }
     public static ModernContainer getTLContainer() {
         return containerStack.peek();

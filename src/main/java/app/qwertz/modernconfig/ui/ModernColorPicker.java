@@ -6,6 +6,9 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -305,21 +308,19 @@ public class ModernColorPicker extends AbstractWidget {
         context.fill(startX - 1, indicatorY, startX + HUE_BAR_WIDTH + 1, indicatorY + 1, 0xFF000000 | (accent & 0xFFFFFF));
     }
     
-        @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0) {
+            double mouseX = event.x();
+            double mouseY = event.y();
             int swatchX = getX();
             int swatchY = getY() + 12;
-            int expandX = swatchX + SWATCH_SIZE + 5;
-            int hexInputX = expandX + 20;
-            
-            // Check hex input first (always visible)
-            if (hexInput.mouseClicked(mouseX, mouseY, button)) {
+
+            if (hexInput.mouseClicked(event, doubled)) {
                 return true;
             }
-            
-            // Check if clicking on swatch or expand button
-            if (mouseX >= swatchX && mouseX <= swatchX + SWATCH_SIZE + 20 && 
+
+            if (mouseX >= swatchX && mouseX <= swatchX + SWATCH_SIZE + 20 &&
                 mouseY >= swatchY && mouseY <= swatchY + SWATCH_SIZE) {
                 // Collapse all other color pickers first
                 collapseAllExcept(this);
@@ -380,8 +381,8 @@ public class ModernColorPicker extends AbstractWidget {
     }
     
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && (isDragging || isDraggingHue)) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0 && (isDragging || isDraggingHue)) {
             isDragging = false;
             isDraggingHue = false;
             if (onColorComplete != null) {
@@ -391,15 +392,15 @@ public class ModernColorPicker extends AbstractWidget {
         }
         return false;
     }
-    
+
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (button == 0 && isDragging) {
-            updateSaturationBrightness(mouseX, mouseY);
+    public boolean mouseDragged(MouseButtonEvent event, double offsetX, double offsetY) {
+        if (event.button() == 0 && isDragging) {
+            updateSaturationBrightness(event.x(), event.y());
             return true;
         }
-        if (button == 0 && isDraggingHue) {
-            updateHue(mouseY);
+        if (event.button() == 0 && isDraggingHue) {
+            updateHue(event.y());
             return true;
         }
         return false;
@@ -450,19 +451,19 @@ public class ModernColorPicker extends AbstractWidget {
     }
     
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (hexInput.keyPressed(keyCode, scanCode, modifiers)) {
+    public boolean keyPressed(KeyEvent event) {
+        if (hexInput.keyPressed(event)) {
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
-        if (hexInput.charTyped(chr, modifiers)) {
+    public boolean charTyped(CharacterEvent event) {
+        if (hexInput.charTyped(event)) {
             return true;
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(event);
     }
 
     /**

@@ -2,6 +2,7 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -69,8 +70,13 @@ public class ModernButton extends AbstractWidget {
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        onClick.run();
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0 && event.x() >= getX() && event.x() <= getX() + getWidth() &&
+            event.y() >= getY() && event.y() <= getY() + getHeight()) {
+            onClick.run();
+            return true;
+        }
+        return super.mouseClicked(event, doubled);
     }
 
     @Override

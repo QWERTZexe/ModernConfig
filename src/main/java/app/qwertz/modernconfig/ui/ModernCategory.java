@@ -7,6 +7,7 @@ import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -63,8 +64,13 @@ public class ModernCategory extends AbstractWidget {
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        onClick.accept(this);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0 && event.x() >= getX() && event.x() <= getX() + width &&
+            event.y() >= getY() && event.y() <= getY() + height) {
+            onClick.accept(this);
+            return true;
+        }
+        return super.mouseClicked(event, doubled);
     }
 
     @Override

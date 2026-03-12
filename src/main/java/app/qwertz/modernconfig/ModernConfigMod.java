@@ -21,7 +21,7 @@ public class ModernConfigMod implements ClientModInitializer {
             "key.modernconfig.open_config",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_RIGHT_SHIFT,
-            "category.modernconfig.general"
+            KeyMapping.Category.register(ResourceLocation.fromNamespaceAndPath("modernconfig", "general"))
         ));
 
         // Register tick event for keybind

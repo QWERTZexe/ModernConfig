@@ -3,6 +3,7 @@ package app.qwertz.modernconfig.ui;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.function.Consumer;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -88,9 +89,14 @@ public class ModernToggle extends AbstractWidget {
     }
 
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        state = !state;
-        onToggle.accept(state);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0 && event.x() >= getX() && event.x() <= getX() + getWidth() &&
+            event.y() >= getY() && event.y() <= getY() + getHeight()) {
+            state = !state;
+            onToggle.accept(state);
+            return true;
+        }
+        return super.mouseClicked(event, doubled);
     }
 
     @Override

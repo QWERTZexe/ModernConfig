@@ -4,6 +4,7 @@ import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -167,35 +168,26 @@ public class ModernDropdown extends AbstractWidget {
         }
     }
 
-    @Override
-    public void onClick(double mouseX, double mouseY) {
+    private void onDropdownClick(double mouseX, double mouseY) {
         if (isExpanded) {
-            // Check if clicking on an option
             int dropdownY = getY() + getMainHeight() + 2;
             int visibleOptions = Math.min(options.size(), maxVisibleOptions);
-            
             for (int i = 0; i < visibleOptions && i < options.size(); i++) {
                 int optionY = dropdownY + i * optionHeight;
-                
                 if (mouseY >= optionY && mouseY <= optionY + optionHeight) {
-                    // Option clicked
                     selectedIndex = i;
                     onSelectionChange.accept(selectedIndex);
                     isExpanded = false;
                     updateParentLayout();
-                    
                     Minecraft.getInstance().getSoundManager().play(
                         SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
                     );
                     return;
                 }
             }
-            
-            // Clicked outside options, close dropdown
             isExpanded = false;
             updateParentLayout();
         } else {
-            // Open dropdown
             isExpanded = true;
             updateParentLayout();
             Minecraft.getInstance().getSoundManager().play(
@@ -205,31 +197,29 @@ public class ModernDropdown extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
-            // Check if click is within the dropdown area when expanded
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0) {
+            double mouseX = event.x();
+            double mouseY = event.y();
             if (isExpanded) {
                 int mainHeight = getMainHeight();
                 int dropdownY = getY() + mainHeight + 2;
                 int visibleOptions = Math.min(options.size(), maxVisibleOptions);
                 int dropdownHeight = visibleOptions * optionHeight;
-                
-                if (mouseX >= getX() && mouseX <= getX() + getWidth() && 
+                if (mouseX >= getX() && mouseX <= getX() + getWidth() &&
                     mouseY >= getY() && mouseY <= dropdownY + dropdownHeight) {
-                    onClick(mouseX, mouseY);
+                    onDropdownClick(mouseX, mouseY);
                     return true;
                 } else {
-                    // Click outside dropdown, close it
                     isExpanded = false;
                     updateParentLayout();
                     return false;
                 }
             } else {
-                // Check if click is within the main dropdown button
                 int mainHeight = getMainHeight();
-                if (mouseX >= getX() && mouseX <= getX() + getWidth() && 
+                if (mouseX >= getX() && mouseX <= getX() + getWidth() &&
                     mouseY >= getY() && mouseY <= getY() + mainHeight) {
-                    onClick(mouseX, mouseY);
+                    onDropdownClick(mouseX, mouseY);
                     return true;
                 }
             }

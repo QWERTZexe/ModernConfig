@@ -3,6 +3,7 @@ package app.qwertz.modernconfig.ui;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import org.lwjgl.glfw.GLFW;
 import java.util.function.Consumer;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -60,7 +61,7 @@ public class ModernSlider extends AbstractWidget {
                 lastUpdateTime = currentTime;
                 
                 // Check if mouse button is still pressed
-                boolean isMousePressed = GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+                boolean isMousePressed = GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().handle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
                 
                 if (isMousePressed) {
                     // Update slider position based on current mouse position
@@ -117,12 +118,14 @@ public class ModernSlider extends AbstractWidget {
         }
     }
     
-        @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && mouseX >= getX() && mouseX <= getX() + getWidth() && 
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        if (event.button() == 0 && mouseX >= getX() && mouseX <= getX() + getWidth() &&
             mouseY >= getY() && mouseY <= getY() + getHeight()) {
             isDragging = true;
-            lastUpdateTime = System.currentTimeMillis(); // Initialize timer
+            lastUpdateTime = System.currentTimeMillis();
             updateValueFromMouse(mouseX);
             return true;
         }
@@ -130,10 +133,9 @@ public class ModernSlider extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && isDragging) {
+    public boolean mouseReleased(MouseButtonEvent event) {
+        if (event.button() == 0 && isDragging) {
             isDragging = false;
-            // Call drag complete callback to save
             if (onDragComplete != null) {
                 onDragComplete.accept(currentValue);
             }
@@ -142,10 +144,8 @@ public class ModernSlider extends AbstractWidget {
         return false;
     }
 
-    // We can remove these since we're using polling instead of drag events
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        // No longer needed - using polling approach
+    public boolean mouseDragged(MouseButtonEvent event, double offsetX, double offsetY) {
         return false;
     }
     

@@ -3,6 +3,7 @@ package app.qwertz.modernconfig.ui;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -277,11 +278,14 @@ public class ModernContainer {
         }
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         // Check if clicking scrollbar
         if (contentHeight > height) {
             int scrollbarX = x + width - SCROLLBAR_WIDTH - SCROLLBAR_PADDING;
-            if (mouseX >= scrollbarX && mouseX <= scrollbarX + SCROLLBAR_WIDTH && 
+            if (mouseX >= scrollbarX && mouseX <= scrollbarX + SCROLLBAR_WIDTH &&
                 mouseY >= y && mouseY <= y + height) {
                 isDraggingScrollbar = true;
                 updateScrollFromMouse(mouseY);
@@ -294,7 +298,7 @@ public class ModernContainer {
         // This ensures widgets' main buttons are prioritized over expanded areas
         GuiEventListener targetChild = null;
         GuiEventListener targetChildExpanded = null;
-        
+
         // Pass 1: Check all main widget areas (non-expanded) in reverse order
         for (int i = children.size() - 1; i >= 0; i--) {
             GuiEventListener child = children.get(i);
@@ -308,18 +312,18 @@ public class ModernContainer {
                 } else if (child instanceof ModernListWidget listW) {
                     mainHeight = listW.getMainHeight();
                 }
-                
+
                 boolean inMainArea = widget.getY() + mainHeight >= y && widget.getY() <= y + height &&
                                    mouseX >= widget.getX() && mouseX <= widget.getX() + widget.getWidth() &&
                                    mouseY >= widget.getY() && mouseY <= widget.getY() + mainHeight;
-                
+
                 if (inMainArea) {
                     targetChild = child;
                     break; // Found a widget whose main area contains the click
                 }
             }
         }
-        
+
         // Pass 2: Only if no main area match, check expanded areas (and only for actually expanded widgets)
         if (targetChild == null) {
             for (int i = children.size() - 1; i >= 0; i--) {
@@ -327,7 +331,7 @@ public class ModernContainer {
                 if (child instanceof AbstractWidget widget) {
                     int mainHeight = widget.getHeight();
                     boolean isExpanded = false;
-                    
+
                     if (child instanceof ModernDropdown dropdown) {
                         mainHeight = dropdown.getMainHeight();
                         isExpanded = dropdown.isExpanded();
@@ -338,7 +342,7 @@ public class ModernContainer {
                         mainHeight = listW.getMainHeight();
                         isExpanded = listW.isExpanded();
                     }
-                    
+
                     // Only check expanded area if widget is actually expanded
                     if (isExpanded) {
                         int expandedHeight = widget.getHeight();
@@ -346,7 +350,7 @@ public class ModernContainer {
                             boolean inExpandedArea = widget.getY() + expandedHeight >= y && widget.getY() <= y + height &&
                                                    mouseX >= widget.getX() && mouseX <= widget.getX() + widget.getWidth() &&
                                                    mouseY >= widget.getY() + mainHeight && mouseY <= widget.getY() + expandedHeight;
-                            
+
                             if (inExpandedArea) {
                                 targetChildExpanded = child;
                                 break;
@@ -355,7 +359,7 @@ public class ModernContainer {
                     }
                 }
             }
-            
+
             if (targetChildExpanded != null) {
                 targetChild = targetChildExpanded;
             }
@@ -366,7 +370,7 @@ public class ModernContainer {
         boolean needsLayoutUpdate = false;
         for (GuiEventListener child : children) {
             if (child == targetChild) continue; // Skip the target - it will handle its own focus
-            
+
             if (child instanceof ModernString s) {
                 s.setFocused(false);
             } else if (child instanceof ModernListWidget w) {
@@ -398,13 +402,13 @@ public class ModernContainer {
         // Process the click FIRST (before layout updates) so coordinates are still correct
         boolean clickHandled = false;
         if (targetChild != null && targetChild instanceof AbstractWidget widget) {
-            clickHandled = widget.mouseClicked(mouseX, mouseY, button);
+            clickHandled = widget.mouseClicked(event, doubled);
         } else {
             // No specific target found, check all children (fallback)
             for (GuiEventListener child : children) {
                 if (child instanceof AbstractWidget widget) {
                     if (widget.getY() + widget.getHeight() >= y && widget.getY() <= y + height) {
-                        if (child.mouseClicked(mouseX, mouseY, button)) {
+                        if (child.mouseClicked(event, doubled)) {
                             clickHandled = true;
                             break;
                         }
@@ -412,50 +416,50 @@ public class ModernContainer {
                 }
             }
         }
-        
+
         // Update layout AFTER processing click (if any widget was collapsed)
         // This way the click uses correct coordinates before widgets move
         if (needsLayoutUpdate) {
             updateLayout();
         }
-        
+
         return clickHandled;
     }
 
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(MouseButtonEvent event) {
         if (isDraggingScrollbar) {
             isDraggingScrollbar = false;
             return true;
         }
-        
+
         // Forward release events to ALL child elements (important for drag completion)
         for (GuiEventListener child : children) {
             if (child instanceof AbstractWidget widget) {
-                if (child.mouseReleased(mouseX, mouseY, button)) {
+                if (child.mouseReleased(event)) {
                     return true;
                 }
             }
         }
-        
+
         return false;
     }
 
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(MouseButtonEvent event, double offsetX, double offsetY) {
         if (isDraggingScrollbar) {
-            updateScrollFromMouse(mouseY);
+            updateScrollFromMouse(event.y());
             return true;
         }
-        
+
         // Forward drag events to ALL child elements (not just visible ones)
         // This is important for sliders being dragged outside their bounds
         for (GuiEventListener child : children) {
             if (child instanceof AbstractWidget widget) {
-                if (child.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+                if (child.mouseDragged(event, offsetX, offsetY)) {
                     return true;
                 }
             }
         }
-        
+
         return false;
     }
 

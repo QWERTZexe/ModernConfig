@@ -7,6 +7,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 public class ModernString extends AbstractWidget {
@@ -40,8 +43,9 @@ public class ModernString extends AbstractWidget {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
         if (!focused) return false;
+        int keyCode = event.key();
 
         switch (keyCode) {
             case 259: // Backspace
@@ -78,13 +82,14 @@ public class ModernString extends AbstractWidget {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         if (!focused) return false;
         if (value.length() >= maxLength) return false;
-
-        if (Character.isLetterOrDigit(chr) || chr == '_' || chr == '-' || chr == '.' || chr == ' ' || chr == '#') {
-            value = value.substring(0, cursorPosition) + chr + value.substring(cursorPosition);
-            cursorPosition++;
+        int cp = event.codepoint();
+        if (Character.isLetterOrDigit(cp) || cp == '_' || cp == '-' || cp == '.' || cp == ' ' || cp == '#') {
+            String ch = Character.toString(cp);
+            value = value.substring(0, cursorPosition) + ch + value.substring(cursorPosition);
+            cursorPosition += ch.length();
             onChange.accept(value);
             return true;
         }
@@ -159,19 +164,13 @@ public class ModernString extends AbstractWidget {
         }
     }
 
-    @Override
-    public void onClick(double mouseX, double mouseY) {
+    private void applyClickFocusAndCursor(double mouseX, double mouseY) {
         focused = true;
-        
-        // Calculate text position for cursor placement
         int labelWidth = Minecraft.getInstance().font.width(getMessage()) + 16;
         int textX = getX() + labelWidth;
-        
-        // Find closest character position to click
-        int relativeX = (int)mouseX - textX;
+        int relativeX = (int) mouseX - textX;
         String visibleText = value;
         cursorPosition = 0;
-        
         int currentWidth = 0;
         for (int i = 0; i < visibleText.length(); i++) {
             int charWidth = Minecraft.getInstance().font.width(String.valueOf(visibleText.charAt(i)));
@@ -183,12 +182,16 @@ public class ModernString extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        boolean clicked = super.mouseClicked(mouseX, mouseY, button);
-        if (!clicked) {
-            focused = false;
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        if (event.button() == 0 && mouseX >= getX() && mouseX <= getX() + getWidth() &&
+            mouseY >= getY() && mouseY <= getY() + getHeight()) {
+            applyClickFocusAndCursor(mouseX, mouseY);
+            return true;
         }
-        return clicked;
+        focused = false;
+        return false;
     }
 
     @Override

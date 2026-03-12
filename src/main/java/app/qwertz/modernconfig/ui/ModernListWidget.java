@@ -3,6 +3,9 @@ package app.qwertz.modernconfig.ui;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.config.ListConfigOption;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -164,8 +167,10 @@ public class ModernListWidget extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return false;
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() != 0) return false;
+        double mouseX = event.x();
+        double mouseY = event.y();
 
         if (expandable) {
             boolean inHeader = mouseX >= getX() && mouseX <= getX() + getWidth()
@@ -178,21 +183,21 @@ public class ModernListWidget extends AbstractWidget {
                 return true;
             }
             if (isExpanded && mouseY >= getY() + LIST_HEADER_HEIGHT && mouseY <= getY() + getHeight()) {
-                return modernList.mouseClicked(mouseX, mouseY, button);
+                return modernList.mouseClicked(event, doubled);
             }
             return false;
         }
-        return modernList.mouseClicked(mouseX, mouseY, button);
+        return modernList.mouseClicked(event, doubled);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        return modernList.keyPressed(keyCode, scanCode, modifiers);
+    public boolean keyPressed(KeyEvent event) {
+        return modernList.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
-        return modernList.charTyped(chr, modifiers);
+    public boolean charTyped(CharacterEvent event) {
+        return modernList.charTyped(event);
     }
 
     public ModernList getModernList() {

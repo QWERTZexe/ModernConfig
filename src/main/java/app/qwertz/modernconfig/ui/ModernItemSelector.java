@@ -2,20 +2,24 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class ModernItemSelector extends AbstractWidget {
     private final List<Item> allItems;
@@ -173,7 +177,7 @@ public class ModernItemSelector extends AbstractWidget {
             searchY + 6,
             searchTextColor
         );
-        
+
         // Draw cursor in search
         if (isSearchFocused && searchText.isEmpty()) {
             int cursorX = getX() + 10 + Minecraft.getInstance().font.width("Search items...");
@@ -240,8 +244,7 @@ public class ModernItemSelector extends AbstractWidget {
         }
     }
 
-    @Override
-    public void onClick(double mouseX, double mouseY) {
+    private void onItemSelectorClick(double mouseX, double mouseY) {
         if (isExpanded) {
             // Check if clicking on search box
             int searchY = getY() + getMainHeight() + 7;
@@ -271,13 +274,11 @@ public class ModernItemSelector extends AbstractWidget {
                     return;
                 }
             }
-            
-            // Clicked outside, close dropdown
+
             isExpanded = false;
             isSearchFocused = false;
             updateParentLayout();
         } else {
-            // Open dropdown
             isExpanded = true;
             isSearchFocused = true;
             updateParentLayout();
@@ -288,14 +289,19 @@ public class ModernItemSelector extends AbstractWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() == 0 && event.x() >= getX() && event.x() <= getX() + getWidth() &&
+            event.y() >= getY() && event.y() <= getY() + getHeight()) {
+            onItemSelectorClick(event.x(), event.y());
+            return true;
+        }
+        return super.mouseClicked(event, doubled);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
         if (isSearchFocused) {
-            // Handle search input
+            int keyCode = event.key();
             if (keyCode == 256) { // ESC
                 isSearchFocused = false;
                 return true;
@@ -317,20 +323,21 @@ public class ModernItemSelector extends AbstractWidget {
                 return true;
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         if (isSearchFocused) {
-            if (chr >= ' ' && chr <= '~') {
-                searchText += chr;
+            int cp = event.codepoint();
+            if (cp >= ' ' && cp <= '~') {
+                searchText += Character.toString(cp);
                 searchCursorPosition = searchText.length();
                 updateFilteredItems();
                 return true;
             }
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(event);
     }
 
     public int getMainHeight() {

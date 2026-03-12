@@ -5,6 +5,9 @@ import app.qwertz.modernconfig.config.ConfigManager;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -145,11 +148,12 @@ public class ModernList {
         context.fill(x + 9, y + 5, x + 11, y + 15, color);
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return false;
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
+        if (event.button() != 0) return false;
+        double mouseX = event.x();
+        double mouseY = event.y();
 
         int contentStart = drawHeader ? headerHeight : 0;
-        // Find target by bounds first (so we can clear others before processing click; fixes bottom-to-top focus)
         int targetInputIndex = -1;
         int targetIconIndex = -1;
         for (int i = 0; i < inputs.size(); i++) {
@@ -168,7 +172,6 @@ public class ModernList {
             }
         }
 
-        // Clear focus from all inputs first so only the clicked one gets focus (fixes bottom-to-top)
         for (ModernString input : inputs) {
             input.setFocused(false);
         }
@@ -187,32 +190,26 @@ public class ModernList {
         }
         if (targetInputIndex >= 0) {
             focusedIndex = targetInputIndex;
-            return inputs.get(targetInputIndex).mouseClicked(mouseX, mouseY, button);
+            return inputs.get(targetInputIndex).mouseClicked(event, doubled);
         }
         return false;
     }
 
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
         if (focusedIndex >= 0 && focusedIndex < inputs.size()) {
             ModernString input = inputs.get(focusedIndex);
-            boolean handled = input.keyPressed(keyCode, scanCode, modifiers);
-            
-            // Update the option when the input changes
+            boolean handled = input.keyPressed(event);
             updateOptionFromInputs();
-            
             return handled;
         }
         return false;
     }
 
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent event) {
         if (focusedIndex >= 0 && focusedIndex < inputs.size()) {
             ModernString input = inputs.get(focusedIndex);
-            boolean handled = input.charTyped(chr, modifiers);
-            
-            // Update the option when the input changes
+            boolean handled = input.charTyped(event);
             updateOptionFromInputs();
-            
             return handled;
         }
         return false;
