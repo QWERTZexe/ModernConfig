@@ -2,15 +2,14 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.MinecraftClient;
-
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 
-public class ModernString extends ClickableWidget {
+public class ModernString extends AbstractWidget {
     private String value;
     private final Consumer<String> onChange;
     private final ModernConfigTheme theme;
@@ -23,15 +22,15 @@ public class ModernString extends ClickableWidget {
     private float cursorBlink = 0.0f;
     private final int maxLength;
 
-    public ModernString(int x, int y, int width, int height, Text text, String initial, Consumer<String> onChange) {
+    public ModernString(int x, int y, int width, int height, Component text, String initial, Consumer<String> onChange) {
         this(x, y, width, height, text, initial, onChange, 32, null);
     }
 
-    public ModernString(int x, int y, int width, int height, Text text, String initial, Consumer<String> onChange, int maxLength) {
+    public ModernString(int x, int y, int width, int height, Component text, String initial, Consumer<String> onChange, int maxLength) {
         this(x, y, width, height, text, initial, onChange, maxLength, null);
     }
 
-    public ModernString(int x, int y, int width, int height, Text text, String initial, Consumer<String> onChange, int maxLength, ModernConfigTheme theme) {
+    public ModernString(int x, int y, int width, int height, Component text, String initial, Consumer<String> onChange, int maxLength, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.value = initial != null ? initial : "";
         this.onChange = onChange;
@@ -93,7 +92,7 @@ public class ModernString extends ClickableWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -128,8 +127,8 @@ public class ModernString extends ClickableWidget {
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         // Draw label
         float textY = getY() + (getHeight() - 8) / 2.0f;
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        context.drawString(
+            Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,
             (int)textY,
@@ -137,14 +136,14 @@ public class ModernString extends ClickableWidget {
         );
 
         // Calculate text position
-        int labelWidth = MinecraftClient.getInstance().textRenderer.getWidth(getMessage()) + 16;
+        int labelWidth = Minecraft.getInstance().font.width(getMessage()) + 16;
         int textX = getX() + labelWidth;
         int maxTextWidth = getWidth() - labelWidth - 8;
 
         // Draw text
-        String visibleText = MinecraftClient.getInstance().textRenderer.trimToWidth(value, maxTextWidth);
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        String visibleText = Minecraft.getInstance().font.plainSubstrByWidth(value, maxTextWidth);
+        context.drawString(
+            Minecraft.getInstance().font,
             visibleText,
             textX,
             (int)textY,
@@ -154,7 +153,7 @@ public class ModernString extends ClickableWidget {
         // Draw cursor (ensure full opacity - theme accent may be RGB only)
         if (focused && cursorBlink < 1.0f) {
             String textBeforeCursor = value.substring(0, cursorPosition);
-            int cursorX = textX + MinecraftClient.getInstance().textRenderer.getWidth(textBeforeCursor);
+            int cursorX = textX + Minecraft.getInstance().font.width(textBeforeCursor);
             int cursorColor = theme != null ? (0xFF000000 | (theme.getAccentColor() & 0xFFFFFF)) : 0xFFFFFFFF;
             context.fill(cursorX, (int)textY - 1, cursorX + 1, (int)textY + 9, cursorColor);
         }
@@ -165,7 +164,7 @@ public class ModernString extends ClickableWidget {
         focused = true;
         
         // Calculate text position for cursor placement
-        int labelWidth = MinecraftClient.getInstance().textRenderer.getWidth(getMessage()) + 16;
+        int labelWidth = Minecraft.getInstance().font.width(getMessage()) + 16;
         int textX = getX() + labelWidth;
         
         // Find closest character position to click
@@ -175,7 +174,7 @@ public class ModernString extends ClickableWidget {
         
         int currentWidth = 0;
         for (int i = 0; i < visibleText.length(); i++) {
-            int charWidth = MinecraftClient.getInstance().textRenderer.getWidth(String.valueOf(visibleText.charAt(i)));
+            int charWidth = Minecraft.getInstance().font.width(String.valueOf(visibleText.charAt(i)));
             if (Math.abs(currentWidth - relativeX) > Math.abs(currentWidth + charWidth - relativeX)) {
                 cursorPosition = i + 1;
             }
@@ -193,8 +192,8 @@ public class ModernString extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 
     public String getValue() {

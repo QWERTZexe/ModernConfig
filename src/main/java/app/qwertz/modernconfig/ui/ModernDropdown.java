@@ -2,18 +2,17 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
-
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 
-public class ModernDropdown extends ClickableWidget {
+public class ModernDropdown extends AbstractWidget {
     private final List<String> options;
     private int selectedIndex;
     private final Consumer<Integer> onSelectionChange;
@@ -25,11 +24,11 @@ public class ModernDropdown extends ClickableWidget {
     private final int optionHeight = 20;
     private final int maxVisibleOptions = 10;
 
-    public ModernDropdown(int x, int y, int width, int height, Text text, List<String> options, int selectedIndex, Consumer<Integer> onSelectionChange) {
+    public ModernDropdown(int x, int y, int width, int height, Component text, List<String> options, int selectedIndex, Consumer<Integer> onSelectionChange) {
         this(x, y, width, height, text, options, selectedIndex, onSelectionChange, null);
     }
 
-    public ModernDropdown(int x, int y, int width, int height, Text text, List<String> options, int selectedIndex, Consumer<Integer> onSelectionChange, ModernConfigTheme theme) {
+    public ModernDropdown(int x, int y, int width, int height, Component text, List<String> options, int selectedIndex, Consumer<Integer> onSelectionChange, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.options = options;
         this.selectedIndex = selectedIndex;
@@ -38,7 +37,7 @@ public class ModernDropdown extends ClickableWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -76,8 +75,8 @@ public class ModernDropdown extends ClickableWidget {
         // Draw label (dropdown name)
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (mainHeight - 8) / 2.0f;
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        context.drawString(
+            Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,
             (int)textY,
@@ -85,14 +84,14 @@ public class ModernDropdown extends ClickableWidget {
         );
         
         // Calculate text position for selected option
-        int labelWidth = MinecraftClient.getInstance().textRenderer.getWidth(getMessage()) + 16;
+        int labelWidth = Minecraft.getInstance().font.width(getMessage()) + 16;
         int selectedTextX = getX() + labelWidth;
         
         // Draw selected option text
         String selectedText = selectedIndex >= 0 && selectedIndex < options.size() ? options.get(selectedIndex) : "";
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
-            Text.literal(selectedText),
+        context.drawString(
+            Minecraft.getInstance().font,
+            Component.literal(selectedText),
             selectedTextX,
             (int)textY,
             textColor
@@ -109,7 +108,7 @@ public class ModernDropdown extends ClickableWidget {
         }
     }
 
-    private void renderDropdownOptions(DrawContext context, int mouseX, int mouseY, float expandProgress) {
+    private void renderDropdownOptions(GuiGraphics context, int mouseX, int mouseY, float expandProgress) {
         if (options.isEmpty()) return;
 
         int visibleOptions = Math.min(options.size(), maxVisibleOptions);
@@ -139,9 +138,9 @@ public class ModernDropdown extends ClickableWidget {
             if (optionHeight > 4) { // Only draw text if there's enough space
                 int selectedColor = theme != null ? (0xFF000000 | (theme.getAccentSecondary() & 0xFFFFFF)) : 0xFF88CC88;
                 int optionTextColor = (i == selectedIndex) ? selectedColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
-                context.drawTextWithShadow(
-                    MinecraftClient.getInstance().textRenderer,
-                    Text.literal(options.get(i)),
+                context.drawString(
+                    Minecraft.getInstance().font,
+                    Component.literal(options.get(i)),
                     getX() + 8,
                     optionY + (optionHeight - 8) / 2,
                     optionTextColor
@@ -150,7 +149,7 @@ public class ModernDropdown extends ClickableWidget {
         }
     }
 
-    private void drawArrow(DrawContext context, int x, int y, boolean isExpanded, float progress) {
+    private void drawArrow(GuiGraphics context, int x, int y, boolean isExpanded, float progress) {
         int color = 0xFFAAAAAA;
         
         if (isExpanded) {
@@ -185,8 +184,8 @@ public class ModernDropdown extends ClickableWidget {
                     isExpanded = false;
                     updateParentLayout();
                     
-                    MinecraftClient.getInstance().getSoundManager().play(
-                        PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+                    Minecraft.getInstance().getSoundManager().play(
+                        SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
                     );
                     return;
                 }
@@ -199,8 +198,8 @@ public class ModernDropdown extends ClickableWidget {
             // Open dropdown
             isExpanded = true;
             updateParentLayout();
-            MinecraftClient.getInstance().getSoundManager().play(
-                PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+            Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
             );
         }
     }
@@ -303,7 +302,7 @@ public class ModernDropdown extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 } 

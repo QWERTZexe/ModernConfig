@@ -1,17 +1,17 @@
 package app.qwertz.modernconfig.config;
 
-import net.minecraft.util.Identifier;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
-public class ItemConfigOption extends ConfigOption<Identifier> {
+public class ItemConfigOption extends ConfigOption<ResourceLocation> {
     
-    public ItemConfigOption(String id, String name, String description, Identifier defaultValue) {
+    public ItemConfigOption(String id, String name, String description, ResourceLocation defaultValue) {
         super(id, name, description, defaultValue);
     }
     
     public ItemConfigOption(String id, String name, String description, String defaultItemId) {
-        super(id, name, description, Identifier.of(defaultItemId));
+        super(id, name, description, ResourceLocation.parse(defaultItemId));
     }
     
     public String getItemId() {
@@ -19,10 +19,10 @@ public class ItemConfigOption extends ConfigOption<Identifier> {
     }
     
     public void setItemId(String itemId) {
-        setValue(Identifier.of(itemId));
+        setValue(ResourceLocation.parse(itemId));
     }
     
     public Item getItem() {
-        return Registries.ITEM.get(getValue());
+        return BuiltInRegistries.ITEM.getValue(getValue());
     }
 } 

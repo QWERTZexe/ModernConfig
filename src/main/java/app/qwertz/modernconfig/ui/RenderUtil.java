@@ -1,9 +1,9 @@
 package app.qwertz.modernconfig.ui;
 
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.GuiGraphics;
 
 public class RenderUtil {
-    public static void drawRoundedRect(DrawContext context, int x, int y, int width, int height, int radius, int color) {
+    public static void drawRoundedRect(GuiGraphics context, int x, int y, int width, int height, int radius, int color) {
         // Draw main rectangle
         context.fill(x + radius, y, x + width - radius, y + height, color);
         context.fill(x, y + radius, x + width, y + height - radius, color);
@@ -27,7 +27,7 @@ public class RenderUtil {
         }
     }
 
-    public static void drawBlurredBackground(DrawContext context, int x, int y, int width, int height, float alpha) {
+    public static void drawBlurredBackground(GuiGraphics context, int x, int y, int width, int height, float alpha) {
         int color1 = (int)(alpha * 255) << 24 | 0x101010;
         int color2 = (int)(alpha * 255) << 24 | 0x202020;
         context.fillGradient(x, y, x + width, y + height, color1, color2);

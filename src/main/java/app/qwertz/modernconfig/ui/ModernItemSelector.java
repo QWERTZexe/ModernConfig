@@ -2,23 +2,22 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
-public class ModernItemSelector extends ClickableWidget {
+public class ModernItemSelector extends AbstractWidget {
     private final List<Item> allItems;
     private final List<Item> filteredItems;
     private Item selectedItem;
@@ -34,11 +33,11 @@ public class ModernItemSelector extends ClickableWidget {
     private boolean isSearchFocused = false;
     private int searchCursorPosition = 0;
 
-    public ModernItemSelector(int x, int y, int width, int height, Text text, Item defaultItem, Consumer<Item> onSelectionChange) {
+    public ModernItemSelector(int x, int y, int width, int height, Component text, Item defaultItem, Consumer<Item> onSelectionChange) {
         this(x, y, width, height, text, defaultItem, onSelectionChange, null);
     }
 
-    public ModernItemSelector(int x, int y, int width, int height, Text text, Item defaultItem, Consumer<Item> onSelectionChange, ModernConfigTheme theme) {
+    public ModernItemSelector(int x, int y, int width, int height, Component text, Item defaultItem, Consumer<Item> onSelectionChange, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.selectedItem = defaultItem;
         this.onSelectionChange = onSelectionChange;
@@ -47,7 +46,7 @@ public class ModernItemSelector extends ClickableWidget {
         // Get all registered items
         this.allItems = new ArrayList<>();
         this.filteredItems = new ArrayList<>();
-        Registries.ITEM.forEach(item -> {
+        BuiltInRegistries.ITEM.forEach(item -> {
             if (item != null) {
                 allItems.add(item);
             }
@@ -66,7 +65,7 @@ public class ModernItemSelector extends ClickableWidget {
             filteredItems.addAll(allItems.stream()
                 .filter(item -> {
                     String itemName = item.getName().getString().toLowerCase();
-                    String itemId = Registries.ITEM.getId(item).toString().toLowerCase();
+                    String itemId = BuiltInRegistries.ITEM.getKey(item).toString().toLowerCase();
                     return itemName.contains(searchLower) || itemId.contains(searchLower);
                 })
                 .limit(100)
@@ -75,7 +74,7 @@ public class ModernItemSelector extends ClickableWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -113,8 +112,8 @@ public class ModernItemSelector extends ClickableWidget {
         // Draw label
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (mainHeight - 8) / 2.0f;
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        context.drawString(
+            Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,
             (int)textY,
@@ -130,7 +129,7 @@ public class ModernItemSelector extends ClickableWidget {
             
             // Draw item
             ItemStack stack = new ItemStack(selectedItem);
-            context.drawItem(stack, itemX, itemY);
+            context.renderItem(stack, itemX, itemY);
         }
 
         // Draw expand arrow
@@ -144,7 +143,7 @@ public class ModernItemSelector extends ClickableWidget {
         }
     }
 
-    private void renderDropdown(DrawContext context, int mouseX, int mouseY, float expandProgress) {
+    private void renderDropdown(GuiGraphics context, int mouseX, int mouseY, float expandProgress) {
         int dropdownHeight = (int) ((maxVisibleOptions * optionHeight + 30) * expandProgress);
         int dropdownY = getY() + getMainHeight() + 2;
 
@@ -167,8 +166,8 @@ public class ModernItemSelector extends ClickableWidget {
         String displayText = searchText.isEmpty() ? "Search items..." : searchText;
         int searchPlaceholderColor = theme != null ? theme.getTextColorSecondary() : 0xFF666666;
         int searchTextColor = searchText.isEmpty() ? searchPlaceholderColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        context.drawString(
+            Minecraft.getInstance().font,
             displayText,
             getX() + 10,
             searchY + 6,
@@ -177,7 +176,7 @@ public class ModernItemSelector extends ClickableWidget {
         
         // Draw cursor in search
         if (isSearchFocused && searchText.isEmpty()) {
-            int cursorX = getX() + 10 + MinecraftClient.getInstance().textRenderer.getWidth("Search items...");
+            int cursorX = getX() + 10 + Minecraft.getInstance().font.width("Search items...");
             context.fill(cursorX, searchY + 6, cursorX + 1, searchY + 16, searchOutline);
         }
         
@@ -207,7 +206,7 @@ public class ModernItemSelector extends ClickableWidget {
             int iconX = getX() + 8;
             int iconY = itemY + (itemHeight - 16) / 2;
             ItemStack stack = new ItemStack(item);
-            context.drawItem(stack, iconX, iconY);
+            context.renderItem(stack, iconX, iconY);
             
             // Draw item name
             String itemName = item.getName().getString();
@@ -215,8 +214,8 @@ public class ModernItemSelector extends ClickableWidget {
             int nameY = itemY + (itemHeight - 8) / 2;
             int selectedNameColor = theme != null ? (0xFF000000 | (theme.getAccentSecondary() & 0xFFFFFF)) : 0xFF88CC88;
             int nameColor = isSelected ? selectedNameColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
-            context.drawTextWithShadow(
-                MinecraftClient.getInstance().textRenderer,
+            context.drawString(
+                Minecraft.getInstance().font,
                 itemName,
                 nameX,
                 nameY,
@@ -225,7 +224,7 @@ public class ModernItemSelector extends ClickableWidget {
         }
     }
 
-    private void drawArrow(DrawContext context, int x, int y, boolean isExpanded, float progress) {
+    private void drawArrow(GuiGraphics context, int x, int y, boolean isExpanded, float progress) {
         int color = theme != null ? theme.getAccentColor() : 0xFFAAAAAA;
         
         if (isExpanded) {
@@ -266,8 +265,8 @@ public class ModernItemSelector extends ClickableWidget {
                     isExpanded = false;
                     updateParentLayout();
                     
-                    MinecraftClient.getInstance().getSoundManager().play(
-                        PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+                    Minecraft.getInstance().getSoundManager().play(
+                        SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
                     );
                     return;
                 }
@@ -282,8 +281,8 @@ public class ModernItemSelector extends ClickableWidget {
             isExpanded = true;
             isSearchFocused = true;
             updateParentLayout();
-            MinecraftClient.getInstance().getSoundManager().play(
-                PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+            Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
             );
         }
     }
@@ -372,7 +371,7 @@ public class ModernItemSelector extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 } 

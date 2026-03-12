@@ -1,27 +1,27 @@
 package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 public class ModernContainer {
     private final int x;
     private final int y;
     private final int width;
     private final int height;
-    private final List<Element> children = new ArrayList<>();
+    private final List<GuiEventListener> children = new ArrayList<>();
     private final List<LayoutElement> layoutElements = new ArrayList<>();
     private int currentY;
     private float alpha = 1.0f;
     private boolean isFullWidth = false;
     private int columns = 1;
     private int padding = 8;
-    private Text title = null;
+    private Component title = null;
     private int scrollOffset = 0;
     private int contentHeight = 0;
     private boolean isDraggingScrollbar = false;
@@ -58,7 +58,7 @@ public class ModernContainer {
         return height;
     }
 
-    public Text getTitle() {
+    public Component getTitle() {
         return title;
     }
 
@@ -70,7 +70,7 @@ public class ModernContainer {
         return columns;
     }
 
-    public ModernContainer setTitle(Text title) {
+    public ModernContainer setTitle(Component title) {
         this.title = title;
         this.currentY += 25; // Space for title
         return this;
@@ -96,11 +96,11 @@ public class ModernContainer {
         return this;
     }
 
-    public void addElement(ClickableWidget element) {
+    public void addElement(AbstractWidget element) {
         addElement(element, new LayoutOptions());
     }
 
-    public void addElement(ClickableWidget element, LayoutOptions options) {
+    public void addElement(AbstractWidget element, LayoutOptions options) {
         children.add(element);
         layoutElements.add(new LayoutElement(element, options));
         updateLayout();
@@ -118,7 +118,7 @@ public class ModernContainer {
         }
 
         for (LayoutElement layoutElement : layoutElements) {
-            ClickableWidget element = layoutElement.element;
+            AbstractWidget element = layoutElement.element;
             LayoutOptions options = layoutElement.options;
 
             int elementWidth = options.fullWidth ? (options.spanColumns * columnWidth + (options.spanColumns - 1) * padding) : columnWidth;
@@ -174,7 +174,7 @@ public class ModernContainer {
             }
 
             for (LayoutElement layoutElement : layoutElements) {
-                ClickableWidget element = layoutElement.element;
+                AbstractWidget element = layoutElement.element;
                 LayoutOptions options = layoutElement.options;
 
                 int elementWidth = options.fullWidth ? (options.spanColumns * columnWidth + (options.spanColumns - 1) * padding) : columnWidth;
@@ -206,7 +206,7 @@ public class ModernContainer {
         }
     }
 
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         // Draw container background
         int bg = theme != null ? theme.getContainerBackground() : 0x202020;
         int backgroundColor = (int)(alpha * 255) << 24 | (bg & 0xFFFFFF);
@@ -227,18 +227,18 @@ public class ModernContainer {
         if (title != null) {
             int titleRgb = theme != null ? (theme.getTextColor() & 0xFFFFFF) : 0xFFFFFF;
             int titleColor = (int)(alpha * 255) << 24 | titleRgb;
-            context.drawTextWithShadow(
-                net.minecraft.client.MinecraftClient.getInstance().textRenderer,
+            context.drawString(
+                net.minecraft.client.Minecraft.getInstance().font,
                 title,
-                x + width / 2 - net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(title) / 2,
+                x + width / 2 - net.minecraft.client.Minecraft.getInstance().font.width(title) / 2,
                 y + padding - scrollOffset,
                 titleColor
             );
         }
 
         // Render all child elements
-        for (Element child : children) {
-            if (child instanceof ClickableWidget widget) {
+        for (GuiEventListener child : children) {
+            if (child instanceof AbstractWidget widget) {
                 if (widget.getY() + widget.getHeight() >= y && widget.getY() <= y + height) {
                     widget.render(context, mouseX, mouseY, delta);
                 }
@@ -292,13 +292,13 @@ public class ModernContainer {
         // First, find which child widget the click is targeting (if any)
         // Two-pass approach: first check all main areas, then check expanded areas
         // This ensures widgets' main buttons are prioritized over expanded areas
-        Element targetChild = null;
-        Element targetChildExpanded = null;
+        GuiEventListener targetChild = null;
+        GuiEventListener targetChildExpanded = null;
         
         // Pass 1: Check all main widget areas (non-expanded) in reverse order
         for (int i = children.size() - 1; i >= 0; i--) {
-            Element child = children.get(i);
-            if (child instanceof ClickableWidget widget) {
+            GuiEventListener child = children.get(i);
+            if (child instanceof AbstractWidget widget) {
                 int mainHeight = widget.getHeight();
                 // Use getMainHeight() for widgets that can expand
                 if (child instanceof ModernDropdown dropdown) {
@@ -323,8 +323,8 @@ public class ModernContainer {
         // Pass 2: Only if no main area match, check expanded areas (and only for actually expanded widgets)
         if (targetChild == null) {
             for (int i = children.size() - 1; i >= 0; i--) {
-                Element child = children.get(i);
-                if (child instanceof ClickableWidget widget) {
+                GuiEventListener child = children.get(i);
+                if (child instanceof AbstractWidget widget) {
                     int mainHeight = widget.getHeight();
                     boolean isExpanded = false;
                     
@@ -364,7 +364,7 @@ public class ModernContainer {
         // Clear focus from all OTHER focusable children (not the target), so only the clicked one gets focus
         // Collect widgets that need layout updates, then update once at the end
         boolean needsLayoutUpdate = false;
-        for (Element child : children) {
+        for (GuiEventListener child : children) {
             if (child == targetChild) continue; // Skip the target - it will handle its own focus
             
             if (child instanceof ModernString s) {
@@ -397,12 +397,12 @@ public class ModernContainer {
 
         // Process the click FIRST (before layout updates) so coordinates are still correct
         boolean clickHandled = false;
-        if (targetChild != null && targetChild instanceof ClickableWidget widget) {
+        if (targetChild != null && targetChild instanceof AbstractWidget widget) {
             clickHandled = widget.mouseClicked(mouseX, mouseY, button);
         } else {
             // No specific target found, check all children (fallback)
-            for (Element child : children) {
-                if (child instanceof ClickableWidget widget) {
+            for (GuiEventListener child : children) {
+                if (child instanceof AbstractWidget widget) {
                     if (widget.getY() + widget.getHeight() >= y && widget.getY() <= y + height) {
                         if (child.mouseClicked(mouseX, mouseY, button)) {
                             clickHandled = true;
@@ -429,8 +429,8 @@ public class ModernContainer {
         }
         
         // Forward release events to ALL child elements (important for drag completion)
-        for (Element child : children) {
-            if (child instanceof ClickableWidget widget) {
+        for (GuiEventListener child : children) {
+            if (child instanceof AbstractWidget widget) {
                 if (child.mouseReleased(mouseX, mouseY, button)) {
                     return true;
                 }
@@ -448,8 +448,8 @@ public class ModernContainer {
         
         // Forward drag events to ALL child elements (not just visible ones)
         // This is important for sliders being dragged outside their bounds
-        for (Element child : children) {
-            if (child instanceof ClickableWidget widget) {
+        for (GuiEventListener child : children) {
+            if (child instanceof AbstractWidget widget) {
                 if (child.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
                     return true;
                 }
@@ -463,28 +463,28 @@ public class ModernContainer {
         float scrollbarHeight = (float) height * height / contentHeight;
         float scrollPercent = (float) (mouseY - y - scrollbarHeight / 2) / (height - scrollbarHeight);
         scrollOffset = (int) (scrollPercent * (contentHeight - height));
-        scrollOffset = MathHelper.clamp(scrollOffset, 0, Math.max(0, contentHeight - height));
+        scrollOffset = Mth.clamp(scrollOffset, 0, Math.max(0, contentHeight - height));
         updateLayout();
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
         if (contentHeight > height) {
-            scrollOffset = (int) MathHelper.clamp(scrollOffset - amount * 20, 0, contentHeight - height);
+            scrollOffset = (int) Mth.clamp(scrollOffset - amount * 20, 0, contentHeight - height);
             updateLayout();
             return true;
         }
         return false;
     }
 
-    public List<Element> children() {
+    public List<GuiEventListener> children() {
         return children;
     }
 
     private static class LayoutElement {
-        final ClickableWidget element;
+        final AbstractWidget element;
         final LayoutOptions options;
 
-        LayoutElement(ClickableWidget element, LayoutOptions options) {
+        LayoutElement(AbstractWidget element, LayoutOptions options) {
             this.element = element;
             this.options = options;
         }

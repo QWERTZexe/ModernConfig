@@ -2,19 +2,18 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
-
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
-public class ModernColorPicker extends ClickableWidget {
+public class ModernColorPicker extends AbstractWidget {
     private int currentColor;
     private final Consumer<Integer> onColorChanged;
     private Consumer<Integer> onColorComplete;
@@ -54,12 +53,12 @@ public class ModernColorPicker extends ClickableWidget {
     // Static list to track all color pickers for global collapse
     private static final List<ModernColorPicker> allColorPickers = new ArrayList<>();
     
-    public ModernColorPicker(int x, int y, int width, int height, Text message, 
+    public ModernColorPicker(int x, int y, int width, int height, Component message, 
                             int currentColor, Consumer<Integer> onColorChanged) {
         this(x, y, width, height, message, currentColor, onColorChanged, null);
     }
     
-    public ModernColorPicker(int x, int y, int width, int height, Text message, 
+    public ModernColorPicker(int x, int y, int width, int height, Component message, 
                             int currentColor, Consumer<Integer> onColorChanged, ModernConfigTheme theme) {
         super(x, y, width, height, message);
         this.currentColor = currentColor;
@@ -73,7 +72,7 @@ public class ModernColorPicker extends ClickableWidget {
         
         // Initialize hex input
         hexInput = new ModernString(0, 0, 90, 20,
-            Text.literal("Hex"), String.format("#%06X", currentColor),
+            Component.literal("Hex"), String.format("#%06X", currentColor),
             value -> onHexInputChanged(value), 7, theme);
         
         // Pre-calculate hue bar once (never changes)
@@ -163,7 +162,7 @@ public class ModernColorPicker extends ClickableWidget {
     }
     
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         int durationMs = Math.max(1, ModernConfigSettings.getAnimationDurationMs());
         float deltaTime = (currentTime - lastExpandTime) / (float) durationMs;
@@ -182,7 +181,7 @@ public class ModernColorPicker extends ClickableWidget {
         // Draw label
         String labelText = getMessage().getString();
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
-        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, labelText + ":", getX(), getY() - 2, textColor);
+        context.drawString(Minecraft.getInstance().font, labelText + ":", getX(), getY() - 2, textColor);
         
         // Draw color swatch button
         int swatchX = getX();
@@ -202,7 +201,7 @@ public class ModernColorPicker extends ClickableWidget {
         int expandX = swatchX + SWATCH_SIZE + 5;
         int expandY = swatchY + 2;
         String expandText = isExpanded ? "▲" : "▼";
-        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, expandText, expandX, expandY, textColor);
+        context.drawString(Minecraft.getInstance().font, expandText, expandX, expandY, textColor);
         
         // Position and render hex input (always visible to the right)
         int hexInputX = expandX + 20;
@@ -224,7 +223,7 @@ public class ModernColorPicker extends ClickableWidget {
         }
     }
     
-    private void drawColorPicker(DrawContext context, int mouseX, int mouseY, float delta) {
+    private void drawColorPicker(GuiGraphics context, int mouseX, int mouseY, float delta) {
         int pickerX = getX();
         int pickerY = getY() + 40;
         
@@ -246,7 +245,7 @@ public class ModernColorPicker extends ClickableWidget {
         // Just show the color preview, hex input is always visible above
     }
     
-    private void drawSaturationBrightnessPicker(DrawContext context, int startX, int startY) {
+    private void drawSaturationBrightnessPicker(GuiGraphics context, int startX, int startY) {
         // Cache the gradient if hue changed (much smaller cache for performance)
         if (Math.abs(lastCachedHue - hue) > 0.001f) {
             int cacheWidth = saturationBrightnessCache.length;
@@ -288,7 +287,7 @@ public class ModernColorPicker extends ClickableWidget {
         RenderUtil.drawRoundedRect(context, indicatorX - 3, indicatorY - 3, 6, 6, 3, 0xFF000000 | (accent & 0xFFFFFF));
     }
     
-    private void drawHueBar(DrawContext context, int startX, int startY) {
+    private void drawHueBar(GuiGraphics context, int startX, int startY) {
         // Use pre-calculated hue gradient (much more efficient with larger blocks)
         int blockSize = HUE_BAR_HEIGHT / hueBarCache.length;
         for (int y = 0; y < hueBarCache.length; y++) {
@@ -410,8 +409,8 @@ public class ModernColorPicker extends ClickableWidget {
         int pickerX = getX();
         int pickerY = getY() + 40;
         
-        saturation = MathHelper.clamp((float) (mouseX - pickerX) / PICKER_WIDTH, 0.0f, 1.0f);
-        brightness = MathHelper.clamp(1.0f - (float) (mouseY - pickerY) / PICKER_HEIGHT, 0.0f, 1.0f);
+        saturation = Mth.clamp((float) (mouseX - pickerX) / PICKER_WIDTH, 0.0f, 1.0f);
+        brightness = Mth.clamp(1.0f - (float) (mouseY - pickerY) / PICKER_HEIGHT, 0.0f, 1.0f);
         
         updateColorFromHSV();
     }
@@ -419,7 +418,7 @@ public class ModernColorPicker extends ClickableWidget {
     private void updateHue(double mouseY) {
         int pickerY = getY() + 40;
         
-        hue = MathHelper.clamp((float) (mouseY - pickerY) / HUE_BAR_HEIGHT, 0.0f, 1.0f);
+        hue = Mth.clamp((float) (mouseY - pickerY) / HUE_BAR_HEIGHT, 0.0f, 1.0f);
         
         updateColorFromHSV();
     }
@@ -511,7 +510,7 @@ public class ModernColorPicker extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 } 

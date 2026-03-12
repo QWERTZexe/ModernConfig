@@ -1,11 +1,11 @@
 package app.qwertz.modernconfig.config;
 
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.util.Identifier;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.resources.ResourceLocation;
 
 public class ConfigBuilder {
     private final Map<String, Object> options = new LinkedHashMap<>();
@@ -13,10 +13,10 @@ public class ConfigBuilder {
     private final String name;
     private final String description;
     private final String id;
-    private final Identifier icon;
+    private final ResourceLocation icon;
     private final ModernConfigTheme theme;
 
-    private ConfigBuilder(String id, String name, String description, Identifier icon, ModernConfigTheme theme, ConfigBuilder parent) {
+    private ConfigBuilder(String id, String name, String description, ResourceLocation icon, ModernConfigTheme theme, ConfigBuilder parent) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -29,7 +29,7 @@ public class ConfigBuilder {
         return new ConfigBuilder(name.toLowerCase(), name, description, null, null, null);
     }
 
-    public static ConfigBuilder create(String name, String description, Identifier icon) {
+    public static ConfigBuilder create(String name, String description, ResourceLocation icon) {
         return new ConfigBuilder(name.toLowerCase(), name, description, icon, null, null);
     }
 
@@ -37,7 +37,7 @@ public class ConfigBuilder {
         return new ConfigBuilder(name.toLowerCase(), name, description, null, theme, null);
     }
 
-    public static ConfigBuilder create(String name, String description, Identifier icon, ModernConfigTheme theme) {
+    public static ConfigBuilder create(String name, String description, ResourceLocation icon, ModernConfigTheme theme) {
         return new ConfigBuilder(name.toLowerCase(), name, description, icon, theme, null);
     }
 
@@ -141,7 +141,7 @@ public class ConfigBuilder {
         return ModernConfig.create(id, name, description, icon, theme, options);
     }
 
-    public Identifier getIcon() {
+    public ResourceLocation getIcon() {
         return icon;
     }
 }

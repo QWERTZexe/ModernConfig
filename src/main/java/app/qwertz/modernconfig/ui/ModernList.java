@@ -3,14 +3,13 @@ package app.qwertz.modernconfig.ui;
 import app.qwertz.modernconfig.config.ListConfigOption;
 import app.qwertz.modernconfig.config.ConfigManager;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 
 public class ModernList {
     private final ListConfigOption option;
@@ -47,7 +46,7 @@ public class ModernList {
         // Add inputs for existing items
         for (String item : items) {
             ModernString input = new ModernString(0, 0, 200, 20, 
-                Text.literal(option.getChildName()), item, 
+                Component.literal(option.getChildName()), item, 
                 newVal -> {
                     // Value changes will be handled in updateOptionFromInputs
                 }, 16, theme);
@@ -56,7 +55,7 @@ public class ModernList {
         
         // Always add one empty input at the end for adding new items
         ModernString addInput = new ModernString(0, 0, 200, 20, 
-            Text.literal(option.getChildName()), "", 
+            Component.literal(option.getChildName()), "", 
             newVal -> {
                 // Value changes will be handled in updateOptionFromInputs
             }, 16, theme);
@@ -88,12 +87,12 @@ public class ModernList {
         return drawHeader ? headerHeight + content : content;
     }
 
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        MinecraftClient mc = MinecraftClient.getInstance();
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        Minecraft mc = Minecraft.getInstance();
         int contentStart = drawHeader ? headerHeight : 0;
         if (drawHeader) {
             int headerColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
-            context.drawText(mc.textRenderer, Text.literal(option.getDescription()), x, y + 2, headerColor, false);
+            context.drawString(mc.font, Component.literal(option.getDescription()), x, y + 2, headerColor, false);
         }
         for (int i = 0; i < inputs.size(); i++) {
             int inputY = y + contentStart + (padding / 2) + i * (itemHeight + padding);
@@ -124,7 +123,7 @@ public class ModernList {
         }
     }
 
-    private void drawDeleteIcon(DrawContext context, int x, int y, int color) {
+    private void drawDeleteIcon(GuiGraphics context, int x, int y, int color) {
         // Draw dustbin/trash icon
         // Lid
         context.fill(x + 5, y + 3, x + 15, y + 5, color);
@@ -138,7 +137,7 @@ public class ModernList {
         context.fill(x + 12, y + 7, x + 13, y + 15, color);
     }
 
-    private void drawPlusIcon(DrawContext context, int x, int y, int color) {
+    private void drawPlusIcon(GuiGraphics context, int x, int y, int color) {
         // Draw plus icon
         // Horizontal line
         context.fill(x + 5, y + 9, x + 15, y + 11, color);
@@ -176,8 +175,8 @@ public class ModernList {
         focusedIndex = -1;
 
         if (targetIconIndex >= 0) {
-            MinecraftClient.getInstance().getSoundManager().play(
-                PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+            Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
             );
             if (targetIconIndex < inputs.size() - 1) {
                 removeItem(targetIconIndex);

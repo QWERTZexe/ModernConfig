@@ -2,31 +2,31 @@ package app.qwertz.modernconfig;
 
 import app.qwertz.modernconfig.config.*;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
 import java.util.Arrays;
 
 public class ModernConfigMod implements ClientModInitializer {
-    private static KeyBinding configKeyBinding;
+    private static KeyMapping configKeyBinding;
     private ModernConfig modernConfig;
 
     @Override
     public void onInitializeClient() {
         // Register keybind
-        configKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        configKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key.modernconfig.open_config",
-            InputUtil.Type.KEYSYM,
+            InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_RIGHT_SHIFT,
             "category.modernconfig.general"
         ));
 
         // Register tick event for keybind
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (configKeyBinding.wasPressed()) {
+            if (configKeyBinding.consumeClick()) {
                 ModernConfig.openGlobalConfig();
             }
         });
@@ -36,7 +36,7 @@ public class ModernConfigMod implements ClientModInitializer {
 
     private ModernConfig buildConfig() {
         // Create icon for ModernConfig
-        Identifier modernConfigIcon = Identifier.of("modernconfig", "icon.png");
+        ResourceLocation modernConfigIcon = ResourceLocation.fromNamespaceAndPath("modernconfig", "icon.png");
 
         // Build the configuration with settings and examples
         return ConfigBuilder.create("ModernConfig", "Configuration for ModernConfig itself", modernConfigIcon, ModernConfigTheme.YELLOW)

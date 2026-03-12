@@ -3,7 +3,7 @@ package app.qwertz.modernconfig.config;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import com.google.gson.*;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import java.io.*;
 import java.nio.file.*;
 import java.util.Map;
@@ -16,7 +16,7 @@ public class ConfigManager {
     public static class ModInfo {
         private final String name;
         private final String description;
-        private final Identifier icon;
+        private final ResourceLocation icon;
         private final ModernConfigTheme theme;
         
         public ModInfo(String name, String description) {
@@ -26,14 +26,14 @@ public class ConfigManager {
             this.theme = null;
         }
         
-        public ModInfo(String name, String description, Identifier icon) {
+        public ModInfo(String name, String description, ResourceLocation icon) {
             this.name = name;
             this.description = description;
             this.icon = icon;
             this.theme = null;
         }
         
-        public ModInfo(String name, String description, Identifier icon, ModernConfigTheme theme) {
+        public ModInfo(String name, String description, ResourceLocation icon, ModernConfigTheme theme) {
             this.name = name;
             this.description = description;
             this.icon = icon;
@@ -48,7 +48,7 @@ public class ConfigManager {
             return description;
         }
         
-        public Identifier getIcon() {
+        public ResourceLocation getIcon() {
             return icon;
         }
         
@@ -80,14 +80,14 @@ public class ConfigManager {
         load();
     }
 
-    public static void registerConfig(String modId, String name, String description, Identifier icon, Map<String, Object> config) {
+    public static void registerConfig(String modId, String name, String description, ResourceLocation icon, Map<String, Object> config) {
         modId = modId.toLowerCase();
         MOD_CONFIGS.put(modId, config);
         MOD_INFO.put(modId, new ModInfo(name, description, icon));
         load();
     }
 
-    public static void registerConfig(String modId, String name, String description, Identifier icon, ModernConfigTheme theme, Map<String, Object> config) {
+    public static void registerConfig(String modId, String name, String description, ResourceLocation icon, ModernConfigTheme theme, Map<String, Object> config) {
         modId = modId.toLowerCase();
         MOD_CONFIGS.put(modId, config);
         MOD_INFO.put(modId, new ModInfo(name, description, icon, theme));

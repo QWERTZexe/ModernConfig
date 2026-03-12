@@ -3,14 +3,14 @@ package app.qwertz.modernconfig.ui;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.config.ListConfigOption;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 
-public class ModernListWidget extends ClickableWidget {
+public class ModernListWidget extends AbstractWidget {
     private static final int LIST_HEADER_HEIGHT = 25;
     private static final int LIST_CONTENT_GAP = 2;
 
@@ -20,11 +20,11 @@ public class ModernListWidget extends ClickableWidget {
     private float expandProgress = 0.0f;
     private long lastTime = System.currentTimeMillis();
 
-    public ModernListWidget(int x, int y, int width, ListConfigOption option, Text description) {
+    public ModernListWidget(int x, int y, int width, ListConfigOption option, Component description) {
         this(x, y, width, option, description, null);
     }
 
-    public ModernListWidget(int x, int y, int width, ListConfigOption option, Text description, ModernConfigTheme theme) {
+    public ModernListWidget(int x, int y, int width, ListConfigOption option, Component description, ModernConfigTheme theme) {
         super(x, y, width, 30, description);
         this.expandable = option.isExpandable();
         this.modernList = new ModernList(option, theme);
@@ -91,7 +91,7 @@ public class ModernListWidget extends ClickableWidget {
     }
 
     /** Draw a small "list" icon (stacked lines) so collapsed state looks like a list, not a dropdown. */
-    private void drawListIcon(DrawContext context, int x, int y, int color) {
+    private void drawListIcon(GuiGraphics context, int x, int y, int color) {
         int w = 10;
         int h = 2;
         context.fill(x, y, x + w, y + h, color);
@@ -99,7 +99,7 @@ public class ModernListWidget extends ClickableWidget {
         context.fill(x, y + 8, x + w, y + 8 + h, color);
     }
 
-    private void drawListArrow(DrawContext context, int x, int y, boolean expanded, int color) {
+    private void drawListArrow(GuiGraphics context, int x, int y, boolean expanded, int color) {
         if (expanded) {
             context.fill(x - 3, y + 1, x + 4, y + 2, color);
             context.fill(x - 2, y, x + 3, y + 1, color);
@@ -112,7 +112,7 @@ public class ModernListWidget extends ClickableWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         updatePosition();
 
         if (!expandable) {
@@ -143,13 +143,13 @@ public class ModernListWidget extends ClickableWidget {
         int textY = getY() + (LIST_HEADER_HEIGHT - 8) / 2;
         drawListIcon(context, left, textY - 1, mutedColor);
         left += 14;
-        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, getMessage(), left, textY, textColor);
+        context.drawString(Minecraft.getInstance().font, getMessage(), left, textY, textColor);
         int n = modernList.getOption().getValue().size();
         String countText = n == 1 ? "1 item" : n + " items";
-        int countWidth = MinecraftClient.getInstance().textRenderer.getWidth(countText);
+        int countWidth = Minecraft.getInstance().font.width(countText);
         int arrowX = getX() + getWidth() - 16;
         int arrowY = getY() + LIST_HEADER_HEIGHT / 2;
-        context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, countText, arrowX - countWidth - 8, textY, mutedColor);
+        context.drawString(Minecraft.getInstance().font, countText, arrowX - countWidth - 8, textY, mutedColor);
         drawListArrow(context, arrowX, arrowY, isExpanded, arrowColor);
 
         if (expandProgress > 0.001f) {
@@ -173,8 +173,8 @@ public class ModernListWidget extends ClickableWidget {
             if (inHeader) {
                 isExpanded = !isExpanded;
                 updateParentLayout();
-                MinecraftClient.getInstance().getSoundManager().play(
-                    PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                Minecraft.getInstance().getSoundManager().play(
+                    SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
                 return true;
             }
             if (isExpanded && mouseY >= getY() + LIST_HEADER_HEIGHT && mouseY <= getY() + getHeight()) {
@@ -218,7 +218,7 @@ public class ModernListWidget extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(net.minecraft.client.gui.screen.narration.NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(net.minecraft.client.gui.narration.NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 }

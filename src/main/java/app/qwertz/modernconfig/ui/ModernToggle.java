@@ -2,15 +2,14 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.MinecraftClient;
-
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 
-public class ModernToggle extends ClickableWidget {
+public class ModernToggle extends AbstractWidget {
     private boolean state;
     private final Consumer<Boolean> onToggle;
     private final ModernConfigTheme theme;
@@ -18,11 +17,11 @@ public class ModernToggle extends ClickableWidget {
     private float toggleProgress = 0.0f;
     private long lastTime = System.currentTimeMillis();
 
-    public ModernToggle(int x, int y, int width, int height, Text text, boolean initial, Consumer<Boolean> onToggle) {
+    public ModernToggle(int x, int y, int width, int height, Component text, boolean initial, Consumer<Boolean> onToggle) {
         this(x, y, width, height, text, initial, onToggle, null);
     }
 
-    public ModernToggle(int x, int y, int width, int height, Text text, boolean initial, Consumer<Boolean> onToggle, ModernConfigTheme theme) {
+    public ModernToggle(int x, int y, int width, int height, Component text, boolean initial, Consumer<Boolean> onToggle, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.state = initial;
         this.onToggle = onToggle;
@@ -31,7 +30,7 @@ public class ModernToggle extends ClickableWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -79,8 +78,8 @@ public class ModernToggle extends ClickableWidget {
         // Draw text
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (getHeight() - 8) / 2.0f;
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        context.drawString(
+            Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,
             (int)textY,
@@ -95,7 +94,7 @@ public class ModernToggle extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 }

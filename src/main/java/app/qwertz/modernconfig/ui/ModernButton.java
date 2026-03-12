@@ -2,30 +2,30 @@ package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 
-public class ModernButton extends ClickableWidget {
+public class ModernButton extends AbstractWidget {
     private final Runnable onClick;
     private final ModernConfigTheme theme;
     private float animationProgress = 0.0f;
     private long lastTime = System.currentTimeMillis();
 
-    public ModernButton(int x, int y, int width, int height, Text text, Runnable onClick) {
+    public ModernButton(int x, int y, int width, int height, Component text, Runnable onClick) {
         this(x, y, width, height, text, onClick, null);
     }
 
-    public ModernButton(int x, int y, int width, int height, Text text, Runnable onClick, ModernConfigTheme theme) {
+    public ModernButton(int x, int y, int width, int height, Component text, Runnable onClick, ModernConfigTheme theme) {
         super(x, y, width, height, text);
         this.onClick = onClick;
         this.theme = theme;
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -59,10 +59,10 @@ public class ModernButton extends ClickableWidget {
 
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (getHeight() - 8) / 2.0f;
-        context.drawTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        context.drawString(
+            Minecraft.getInstance().font,
             getMessage(),
-            getX() + (getWidth() - MinecraftClient.getInstance().textRenderer.getWidth(getMessage())) / 2,
+            getX() + (getWidth() - Minecraft.getInstance().font.width(getMessage())) / 2,
             (int)textY,
             textColor
         );
@@ -74,7 +74,7 @@ public class ModernButton extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 } 

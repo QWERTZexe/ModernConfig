@@ -1,15 +1,15 @@
 package app.qwertz.modernconfig.ui;
 
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 
-public class ModernSlider extends ClickableWidget {
+public class ModernSlider extends AbstractWidget {
     private final double minValue;
     private final double maxValue;
     private double currentValue;
@@ -23,13 +23,13 @@ public class ModernSlider extends ClickableWidget {
     private static final long UPDATE_INTERVAL = 50; // 50ms = 0.05 seconds
     private final ModernConfigTheme theme;
     
-    public ModernSlider(int x, int y, int width, int height, Text message, 
+    public ModernSlider(int x, int y, int width, int height, Component message, 
                        double minValue, double maxValue, double currentValue, 
                        int precision, Consumer<Double> onValueChanged) {
         this(x, y, width, height, message, minValue, maxValue, currentValue, precision, onValueChanged, null);
     }
     
-    public ModernSlider(int x, int y, int width, int height, Text message, 
+    public ModernSlider(int x, int y, int width, int height, Component message, 
                        double minValue, double maxValue, double currentValue, 
                        int precision, Consumer<Double> onValueChanged, ModernConfigTheme theme) {
         super(x, y, width, height, message);
@@ -48,7 +48,7 @@ public class ModernSlider extends ClickableWidget {
     }
     
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         // Update hover state
         isHovering = mouseX >= getX() && mouseX <= getX() + getWidth() && 
                     mouseY >= getY() && mouseY <= getY() + getHeight();
@@ -60,7 +60,7 @@ public class ModernSlider extends ClickableWidget {
                 lastUpdateTime = currentTime;
                 
                 // Check if mouse button is still pressed
-                boolean isMousePressed = GLFW.glfwGetMouseButton(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+                boolean isMousePressed = GLFW.glfwGetMouseButton(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
                 
                 if (isMousePressed) {
                     // Update slider position based on current mouse position
@@ -103,7 +103,7 @@ public class ModernSlider extends ClickableWidget {
             String fullText = labelText + ": " + valueText;
             
             int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
-            context.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, fullText, getX(), getY() - 2, textColor);
+            context.drawString(Minecraft.getInstance().font, fullText, getX(), getY() - 2, textColor);
         } catch (Exception e) {
             // Fail silently if text rendering has issues
         }
@@ -185,7 +185,7 @@ public class ModernSlider extends ClickableWidget {
     }
     
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        defaultButtonNarrationText(builder);
     }
 } 
