@@ -351,18 +351,45 @@ public class ConfigScreen extends Screen {
         isTransitioningBack = false;
     }
 
-    /** Navigate from mod root back to main menu (same screen, swipe transition). */
+    /** Navigate from mod root back to ModernConfig's main menu (mod list). */
     public void navigateBackToMainMenu() {
+        // Always go to the ModernConfig main menu when the top-level button is configured as "Back".
+        // If we originally came from the main menu, pop back to that container.
+        // If this screen was opened directly (no main-menu container on the stack),
+        // create a fresh main-menu container and animate back to it.
         this.modId = null;
         this.config = null;
         this.theme = null;
-        previousContainer = containerStack.pop();
+        currentPath.clear();
+
+        if (containerStack.size() > 1) {
+            // We have a previous container (main menu) to return to.
+            previousContainer = containerStack.pop();
+        } else {
+            // No previous container: treat the current mod root as "previous"
+            // and create a new main-menu container as the target.
+            previousContainer = containerStack.peek();
+            ModernContainer newContainer = createContainerForPath(mainContainer.getWidth(), mainContainer.getHeight());
+            containerStack.push(newContainer);
+        }
+
         transitionProgress = 0.0f;
         isTransitioningBack = true;
     }
 
     private void closeScreen() {
         closing = true;
+    }
+
+    @Override
+    public void onClose() {
+        // Clear shared navigation state so a fresh ConfigScreen always starts clean,
+        // regardless of whether it was closed via Done, Back, or Escape.
+        containerStack.clear();
+        previousContainer = null;
+        isTransitioningBack = false;
+        closing = false;
+        super.onClose();
     }
 
 
