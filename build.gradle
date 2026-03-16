@@ -36,7 +36,7 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modImplementation("com.terraformersmc:modmenu:16.0.0")
+    modCompileOnly("com.terraformersmc:modmenu:16.0.0")
 }
 
 processResources {
