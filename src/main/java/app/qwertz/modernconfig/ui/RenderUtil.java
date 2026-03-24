@@ -1,33 +1,27 @@
 package app.qwertz.modernconfig.ui;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class RenderUtil {
-    public static void drawRoundedRect(GuiGraphics context, int x, int y, int width, int height, int radius, int color) {
-        // Draw main rectangle
+    public static void drawRoundedRect(GuiGraphicsExtractor context, int x, int y, int width, int height, int radius, int color) {
         context.fill(x + radius, y, x + width - radius, y + height, color);
         context.fill(x, y + radius, x + width, y + height - radius, color);
-        
-        // Draw corners
+
         for (int i = 0; i < radius * 2; i++) {
             for (int j = 0; j < radius * 2; j++) {
                 float dx = i - radius;
                 float dy = j - radius;
                 if (dx * dx + dy * dy <= radius * radius) {
-                    // Top left
                     context.fill(x + i, y + j, x + i + 1, y + j + 1, color);
-                    // Top right
                     context.fill(x + width - radius * 2 + i, y + j, x + width - radius * 2 + i + 1, y + j + 1, color);
-                    // Bottom left
                     context.fill(x + i, y + height - radius * 2 + j, x + i + 1, y + height - radius * 2 + j + 1, color);
-                    // Bottom right
                     context.fill(x + width - radius * 2 + i, y + height - radius * 2 + j, x + width - radius * 2 + i + 1, y + height - radius * 2 + j + 1, color);
                 }
             }
         }
     }
 
-    public static void drawBlurredBackground(GuiGraphics context, int x, int y, int width, int height, float alpha) {
+    public static void drawBlurredBackground(GuiGraphicsExtractor context, int x, int y, int width, int height, float alpha) {
         int color1 = (int)(alpha * 255) << 24 | 0x101010;
         int color2 = (int)(alpha * 255) << 24 | 0x202020;
         context.fillGradient(x, y, x + width, y + height, color1, color2);
@@ -75,4 +69,4 @@ public class RenderUtil {
         int newAlpha = (int)(originalAlpha * alpha);
         return (color & 0x00FFFFFF) | (newAlpha << 24);
     }
-} 
+}

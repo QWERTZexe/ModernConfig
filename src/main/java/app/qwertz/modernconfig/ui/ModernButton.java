@@ -4,7 +4,7 @@ import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -26,7 +26,7 @@ public class ModernButton extends AbstractWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -60,7 +60,7 @@ public class ModernButton extends AbstractWidget {
 
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (getHeight() - 8) / 2.0f;
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             getMessage(),
             getX() + (getWidth() - Minecraft.getInstance().font.width(getMessage())) / 2,

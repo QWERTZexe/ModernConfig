@@ -10,17 +10,17 @@ import java.util.function.Consumer;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class ModernCategory extends AbstractWidget {
     private final Component description;
-    private final ResourceLocation icon;
+    private final Identifier icon;
     private final List<Object> elements = new ArrayList<>(); // Can contain ConfigOption<?> or ModernCategory
     private float hoverProgress = 0.0f;
     private float arrowAnimProgress = 0.0f;
@@ -45,7 +45,7 @@ public class ModernCategory extends AbstractWidget {
         this.onClick = onClick;
     }
 
-    public ModernCategory(int x, int y, int width, int height, Component title, Component description, ResourceLocation icon, Consumer<ModernCategory> onClick) {
+    public ModernCategory(int x, int y, int width, int height, Component title, Component description, Identifier icon, Consumer<ModernCategory> onClick) {
         super(x, y, width, height, title);
         this.description = description;
         this.icon = icon;
@@ -74,7 +74,7 @@ public class ModernCategory extends AbstractWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -139,7 +139,7 @@ public class ModernCategory extends AbstractWidget {
       //  if (icon != null) {
         //    titleY = titleY + 8;
       //  }
-        context.drawString(textRenderer, getMessage(), textStartX, titleY, titleColor);
+        context.text(textRenderer, getMessage(), textStartX, titleY, titleColor);
 
         // Draw icon if present
         if (icon != null) {
@@ -157,7 +157,7 @@ public class ModernCategory extends AbstractWidget {
         String fullDesc = description.getString();
         String[] lines = wrapDescriptionToTwoLines(textRenderer, fullDesc, maxDescWidth);
         for (int i = 0; i < lines.length; i++) {
-            context.drawString(textRenderer, lines[i], descStartX, descriptionY + i * lineHeight, descriptionColor);
+            context.text(textRenderer, lines[i], descStartX, descriptionY + i * lineHeight, descriptionColor);
         }
 
         // Count items in category (moved to right side near arrow)
@@ -166,14 +166,14 @@ public class ModernCategory extends AbstractWidget {
             String countText = itemCount + " item" + (itemCount == 1 ? "" : "s");
             int countColor = theme != null ? theme.getTextColorSecondary() : 0xFF888888;
             int countWidth = textRenderer.width(countText);
-            context.drawString(textRenderer, countText, getX() + width - 60 - countWidth, getY() + height/2 - textRenderer.lineHeight/2, countColor);
+            context.text(textRenderer, countText, getX() + width - 60 - countWidth, getY() + height/2 - textRenderer.lineHeight/2, countColor);
         }
 
         // Enhanced arrow design
         drawEnhancedArrow(context, easedProgress, arrowEased);
     }
 
-    private void drawEnhancedArrow(GuiGraphics context, float hoverProgress, float animProgress) {
+    private void drawEnhancedArrow(GuiGraphicsExtractor context, float hoverProgress, float animProgress) {
         int arrowBaseX = getX() + width - 40;
         int arrowBaseY = getY() + height / 2;
         
@@ -198,15 +198,15 @@ public class ModernCategory extends AbstractWidget {
         
         // Draw arrow head with three lines for a more defined look
         // Main arrow lines
-        context.hLine(arrowX - arrowSize/2, arrowX, arrowY - arrowSize/2, arrowColor);
-        context.hLine(arrowX - arrowSize/2, arrowX, arrowY + arrowSize/2, arrowColor);
+        context.horizontalLine(arrowX - arrowSize/2, arrowX, arrowY - arrowSize/2, arrowColor);
+        context.horizontalLine(arrowX - arrowSize/2, arrowX, arrowY + arrowSize/2, arrowColor);
         
         // Arrow tip
         for (int i = 0; i < arrowSize/2; i++) {
             int tipAlpha = (int)(arrowAlpha * (1.0f - i * 0.3f / (arrowSize/2)));
             int tipColor = (tipAlpha << 24) | (arrowColor & 0xFFFFFF);
-            context.hLine(arrowX - i, arrowX - i + 1, arrowY - arrowSize/2 + i, tipColor);
-            context.hLine(arrowX - i, arrowX - i + 1, arrowY + arrowSize/2 - i, tipColor);
+            context.horizontalLine(arrowX - i, arrowX - i + 1, arrowY - arrowSize/2 + i, tipColor);
+            context.horizontalLine(arrowX - i, arrowX - i + 1, arrowY + arrowSize/2 - i, tipColor);
         }
 
         // Add subtle glow effect around arrow when hovered

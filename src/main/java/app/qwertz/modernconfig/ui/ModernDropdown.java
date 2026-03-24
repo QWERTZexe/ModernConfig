@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -38,7 +38,7 @@ public class ModernDropdown extends AbstractWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -76,7 +76,7 @@ public class ModernDropdown extends AbstractWidget {
         // Draw label (dropdown name)
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (mainHeight - 8) / 2.0f;
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,
@@ -90,7 +90,7 @@ public class ModernDropdown extends AbstractWidget {
         
         // Draw selected option text
         String selectedText = selectedIndex >= 0 && selectedIndex < options.size() ? options.get(selectedIndex) : "";
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             Component.literal(selectedText),
             selectedTextX,
@@ -109,7 +109,7 @@ public class ModernDropdown extends AbstractWidget {
         }
     }
 
-    private void renderDropdownOptions(GuiGraphics context, int mouseX, int mouseY, float expandProgress) {
+    private void renderDropdownOptions(GuiGraphicsExtractor context, int mouseX, int mouseY, float expandProgress) {
         if (options.isEmpty()) return;
 
         int visibleOptions = Math.min(options.size(), maxVisibleOptions);
@@ -139,7 +139,7 @@ public class ModernDropdown extends AbstractWidget {
             if (optionHeight > 4) { // Only draw text if there's enough space
                 int selectedColor = theme != null ? (0xFF000000 | (theme.getAccentSecondary() & 0xFFFFFF)) : 0xFF88CC88;
                 int optionTextColor = (i == selectedIndex) ? selectedColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
-                context.drawString(
+                context.text(
                     Minecraft.getInstance().font,
                     Component.literal(options.get(i)),
                     getX() + 8,
@@ -150,7 +150,7 @@ public class ModernDropdown extends AbstractWidget {
         }
     }
 
-    private void drawArrow(GuiGraphics context, int x, int y, boolean isExpanded, float progress) {
+    private void drawArrow(GuiGraphicsExtractor context, int x, int y, boolean isExpanded, float progress) {
         int color = 0xFFAAAAAA;
         
         if (isExpanded) {

@@ -4,7 +4,7 @@ import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.Component;
@@ -207,7 +207,7 @@ public class ModernContainer {
         }
     }
 
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Draw container background
         int bg = theme != null ? theme.getContainerBackground() : 0x202020;
         int backgroundColor = (int)(alpha * 255) << 24 | (bg & 0xFFFFFF);
@@ -228,7 +228,7 @@ public class ModernContainer {
         if (title != null) {
             int titleRgb = theme != null ? (theme.getTextColor() & 0xFFFFFF) : 0xFFFFFF;
             int titleColor = (int)(alpha * 255) << 24 | titleRgb;
-            context.drawString(
+            context.text(
                 net.minecraft.client.Minecraft.getInstance().font,
                 title,
                 x + width / 2 - net.minecraft.client.Minecraft.getInstance().font.width(title) / 2,
@@ -241,7 +241,7 @@ public class ModernContainer {
         for (GuiEventListener child : children) {
             if (child instanceof AbstractWidget widget) {
                 if (widget.getY() + widget.getHeight() >= y && widget.getY() <= y + height) {
-                    widget.render(context, mouseX, mouseY, delta);
+                    widget.extractRenderState(context, mouseX, mouseY, delta);
                 }
             }
         }

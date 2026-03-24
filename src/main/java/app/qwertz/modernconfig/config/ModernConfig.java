@@ -4,7 +4,7 @@ import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import app.qwertz.modernconfig.ui.ConfigScreen;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,12 +28,12 @@ public class ModernConfig {
         return ConfigManager.getModConfig(modId);
     }
 
-    public static ModernConfig create(String modId, String name, String description, ResourceLocation icon, Map<String, Object> config) {
+    public static ModernConfig create(String modId, String name, String description, Identifier icon, Map<String, Object> config) {
         ConfigManager.registerConfig(modId, name, description, icon, config);
         return ConfigManager.getModConfig(modId);
     }
 
-    public static ModernConfig create(String modId, String name, String description, ResourceLocation icon, ModernConfigTheme theme, Map<String, Object> config) {
+    public static ModernConfig create(String modId, String name, String description, Identifier icon, ModernConfigTheme theme, Map<String, Object> config) {
         ConfigManager.registerConfig(modId, name, description, icon, theme, config);
         return ConfigManager.getModConfig(modId);
     }

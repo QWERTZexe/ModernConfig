@@ -3,7 +3,7 @@ package app.qwertz.modernconfig.ui;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.CharacterEvent;
@@ -68,7 +68,7 @@ public class ModernItemSelector extends AbstractWidget {
             String searchLower = searchText.toLowerCase();
             filteredItems.addAll(allItems.stream()
                 .filter(item -> {
-                    String itemName = item.getName().getString().toLowerCase();
+                    String itemName = item.getName(new ItemStack(item)).getString().toLowerCase();
                     String itemId = BuiltInRegistries.ITEM.getKey(item).toString().toLowerCase();
                     return itemName.contains(searchLower) || itemId.contains(searchLower);
                 })
@@ -78,7 +78,7 @@ public class ModernItemSelector extends AbstractWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -116,7 +116,7 @@ public class ModernItemSelector extends AbstractWidget {
         // Draw label
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (mainHeight - 8) / 2.0f;
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,
@@ -133,7 +133,7 @@ public class ModernItemSelector extends AbstractWidget {
             
             // Draw item
             ItemStack stack = new ItemStack(selectedItem);
-            context.renderItem(stack, itemX, itemY);
+            context.item(stack, itemX, itemY);
         }
 
         // Draw expand arrow
@@ -147,7 +147,7 @@ public class ModernItemSelector extends AbstractWidget {
         }
     }
 
-    private void renderDropdown(GuiGraphics context, int mouseX, int mouseY, float expandProgress) {
+    private void renderDropdown(GuiGraphicsExtractor context, int mouseX, int mouseY, float expandProgress) {
         int dropdownHeight = (int) ((maxVisibleOptions * optionHeight + 30) * expandProgress);
         int dropdownY = getY() + getMainHeight() + 2;
 
@@ -170,7 +170,7 @@ public class ModernItemSelector extends AbstractWidget {
         String displayText = searchText.isEmpty() ? "Search items..." : searchText;
         int searchPlaceholderColor = theme != null ? theme.getTextColorSecondary() : 0xFF666666;
         int searchTextColor = searchText.isEmpty() ? searchPlaceholderColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             displayText,
             getX() + 10,
@@ -210,15 +210,15 @@ public class ModernItemSelector extends AbstractWidget {
             int iconX = getX() + 8;
             int iconY = itemY + (itemHeight - 16) / 2;
             ItemStack stack = new ItemStack(item);
-            context.renderItem(stack, iconX, iconY);
+            context.item(stack, iconX, iconY);
             
             // Draw item name
-            String itemName = item.getName().getString();
+            String itemName = item.getName(new ItemStack(item)).getString();
             int nameX = iconX + 20;
             int nameY = itemY + (itemHeight - 8) / 2;
             int selectedNameColor = theme != null ? (0xFF000000 | (theme.getAccentSecondary() & 0xFFFFFF)) : 0xFF88CC88;
             int nameColor = isSelected ? selectedNameColor : (theme != null ? theme.getTextColor() : 0xFFFFFFFF);
-            context.drawString(
+            context.text(
                 Minecraft.getInstance().font,
                 itemName,
                 nameX,
@@ -228,7 +228,7 @@ public class ModernItemSelector extends AbstractWidget {
         }
     }
 
-    private void drawArrow(GuiGraphics context, int x, int y, boolean isExpanded, float progress) {
+    private void drawArrow(GuiGraphicsExtractor context, int x, int y, boolean isExpanded, float progress) {
         int color = theme != null ? theme.getAccentColor() : 0xFFAAAAAA;
         
         if (isExpanded) {

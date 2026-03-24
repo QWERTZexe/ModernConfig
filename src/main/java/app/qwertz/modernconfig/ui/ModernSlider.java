@@ -5,7 +5,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.function.Consumer;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -49,7 +49,7 @@ public class ModernSlider extends AbstractWidget {
     }
     
     @Override
-    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Update hover state
         isHovering = mouseX >= getX() && mouseX <= getX() + getWidth() && 
                     mouseY >= getY() && mouseY <= getY() + getHeight();
@@ -104,7 +104,7 @@ public class ModernSlider extends AbstractWidget {
             String fullText = labelText + ": " + valueText;
             
             int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
-            context.drawString(Minecraft.getInstance().font, fullText, getX(), getY() - 2, textColor);
+            context.text(Minecraft.getInstance().font, fullText, getX(), getY() - 2, textColor);
         } catch (Exception e) {
             // Fail silently if text rendering has issues
         }

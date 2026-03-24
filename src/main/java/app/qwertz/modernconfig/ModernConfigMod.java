@@ -4,9 +4,9 @@ import app.qwertz.modernconfig.config.*;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import java.util.Arrays;
 
@@ -17,11 +17,11 @@ public class ModernConfigMod implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         // Register keybind
-        configKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+        configKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.modernconfig.open_config",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_RIGHT_SHIFT,
-            KeyMapping.Category.register(ResourceLocation.fromNamespaceAndPath("modernconfig", "general"))
+            KeyMapping.Category.register(Identifier.fromNamespaceAndPath("modernconfig", "general"))
         ));
 
         // Register tick event for keybind
@@ -36,7 +36,7 @@ public class ModernConfigMod implements ClientModInitializer {
 
     private ModernConfig buildConfig() {
         // Create icon for ModernConfig
-        ResourceLocation modernConfigIcon = ResourceLocation.fromNamespaceAndPath("modernconfig", "icon.png");
+        Identifier modernConfigIcon = Identifier.fromNamespaceAndPath("modernconfig", "icon.png");
 
         // Build the configuration with settings and examples
         return ConfigBuilder.create("ModernConfig", "Configuration for ModernConfig itself", modernConfigIcon, ModernConfigTheme.YELLOW)

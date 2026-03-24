@@ -4,7 +4,7 @@ import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.CharacterEvent;
@@ -96,8 +96,13 @@ public class ModernString extends AbstractWidget {
         return false;
     }
 
+    // Public wrapper: extractWidgetRenderState is protected; ModernList / ModernColorPicker call this.
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        extractWidgetRenderState(context, mouseX, mouseY, delta);
+    }
+
     @Override
-    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -132,7 +137,7 @@ public class ModernString extends AbstractWidget {
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         // Draw label
         float textY = getY() + (getHeight() - 8) / 2.0f;
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,
@@ -147,7 +152,7 @@ public class ModernString extends AbstractWidget {
 
         // Draw text
         String visibleText = Minecraft.getInstance().font.plainSubstrByWidth(value, maxTextWidth);
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             visibleText,
             textX,

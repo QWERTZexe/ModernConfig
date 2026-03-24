@@ -10,7 +10,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -165,7 +165,7 @@ public class ModernColorPicker extends AbstractWidget {
     }
     
     @Override
-    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         int durationMs = Math.max(1, ModernConfigSettings.getAnimationDurationMs());
         float deltaTime = (currentTime - lastExpandTime) / (float) durationMs;
@@ -184,7 +184,7 @@ public class ModernColorPicker extends AbstractWidget {
         // Draw label
         String labelText = getMessage().getString();
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
-        context.drawString(Minecraft.getInstance().font, labelText + ":", getX(), getY() - 2, textColor);
+        context.text(Minecraft.getInstance().font, labelText + ":", getX(), getY() - 2, textColor);
         
         // Draw color swatch button
         int swatchX = getX();
@@ -204,7 +204,7 @@ public class ModernColorPicker extends AbstractWidget {
         int expandX = swatchX + SWATCH_SIZE + 5;
         int expandY = swatchY + 2;
         String expandText = isExpanded ? "▲" : "▼";
-        context.drawString(Minecraft.getInstance().font, expandText, expandX, expandY, textColor);
+        context.text(Minecraft.getInstance().font, expandText, expandX, expandY, textColor);
         
         // Position and render hex input (always visible to the right)
         int hexInputX = expandX + 20;
@@ -226,7 +226,7 @@ public class ModernColorPicker extends AbstractWidget {
         }
     }
     
-    private void drawColorPicker(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    private void drawColorPicker(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         int pickerX = getX();
         int pickerY = getY() + 40;
         
@@ -248,7 +248,7 @@ public class ModernColorPicker extends AbstractWidget {
         // Just show the color preview, hex input is always visible above
     }
     
-    private void drawSaturationBrightnessPicker(GuiGraphics context, int startX, int startY) {
+    private void drawSaturationBrightnessPicker(GuiGraphicsExtractor context, int startX, int startY) {
         // Cache the gradient if hue changed (much smaller cache for performance)
         if (Math.abs(lastCachedHue - hue) > 0.001f) {
             int cacheWidth = saturationBrightnessCache.length;
@@ -290,7 +290,7 @@ public class ModernColorPicker extends AbstractWidget {
         RenderUtil.drawRoundedRect(context, indicatorX - 3, indicatorY - 3, 6, 6, 3, 0xFF000000 | (accent & 0xFFFFFF));
     }
     
-    private void drawHueBar(GuiGraphics context, int startX, int startY) {
+    private void drawHueBar(GuiGraphicsExtractor context, int startX, int startY) {
         // Use pre-calculated hue gradient (much more efficient with larger blocks)
         int blockSize = HUE_BAR_HEIGHT / hueBarCache.length;
         for (int y = 0; y < hueBarCache.length; y++) {

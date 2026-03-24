@@ -5,7 +5,7 @@ import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.function.Consumer;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
@@ -31,7 +31,7 @@ public class ModernToggle extends AbstractWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float) ModernConfigSettings.getAnimationDurationMs();
         lastTime = currentTime;
@@ -79,7 +79,7 @@ public class ModernToggle extends AbstractWidget {
         // Draw text
         int textColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
         float textY = getY() + (getHeight() - 8) / 2.0f;
-        context.drawString(
+        context.text(
             Minecraft.getInstance().font,
             getMessage(),
             getX() + 8,

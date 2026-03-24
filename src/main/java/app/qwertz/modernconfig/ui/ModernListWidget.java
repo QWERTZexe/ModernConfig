@@ -7,7 +7,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
@@ -94,7 +94,7 @@ public class ModernListWidget extends AbstractWidget {
     }
 
     /** Draw a small "list" icon (stacked lines) so collapsed state looks like a list, not a dropdown. */
-    private void drawListIcon(GuiGraphics context, int x, int y, int color) {
+    private void drawListIcon(GuiGraphicsExtractor context, int x, int y, int color) {
         int w = 10;
         int h = 2;
         context.fill(x, y, x + w, y + h, color);
@@ -102,7 +102,7 @@ public class ModernListWidget extends AbstractWidget {
         context.fill(x, y + 8, x + w, y + 8 + h, color);
     }
 
-    private void drawListArrow(GuiGraphics context, int x, int y, boolean expanded, int color) {
+    private void drawListArrow(GuiGraphicsExtractor context, int x, int y, boolean expanded, int color) {
         if (expanded) {
             context.fill(x - 3, y + 1, x + 4, y + 2, color);
             context.fill(x - 2, y, x + 3, y + 1, color);
@@ -115,7 +115,7 @@ public class ModernListWidget extends AbstractWidget {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    protected void extractWidgetRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         updatePosition();
 
         if (!expandable) {
@@ -146,13 +146,13 @@ public class ModernListWidget extends AbstractWidget {
         int textY = getY() + (LIST_HEADER_HEIGHT - 8) / 2;
         drawListIcon(context, left, textY - 1, mutedColor);
         left += 14;
-        context.drawString(Minecraft.getInstance().font, getMessage(), left, textY, textColor);
+        context.text(Minecraft.getInstance().font, getMessage(), left, textY, textColor);
         int n = modernList.getOption().getValue().size();
         String countText = n == 1 ? "1 item" : n + " items";
         int countWidth = Minecraft.getInstance().font.width(countText);
         int arrowX = getX() + getWidth() - 16;
         int arrowY = getY() + LIST_HEADER_HEIGHT / 2;
-        context.drawString(Minecraft.getInstance().font, countText, arrowX - countWidth - 8, textY, mutedColor);
+        context.text(Minecraft.getInstance().font, countText, arrowX - countWidth - 8, textY, mutedColor);
         drawListArrow(context, arrowX, arrowY, isExpanded, arrowColor);
 
         if (expandProgress > 0.001f) {

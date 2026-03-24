@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
@@ -16,7 +16,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 
 public class ConfigScreen extends Screen {
@@ -277,7 +277,7 @@ public class ConfigScreen extends Screen {
             Item item = BuiltInRegistries.ITEM.getValue(itemOpt.getValue());
             if (item == null) {
                 // Fallback to stone if item not found
-                item = BuiltInRegistries.ITEM.getValue(ResourceLocation.fromNamespaceAndPath("minecraft", "stone"));
+                item = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath("minecraft", "stone"));
             }
             
             ModernItemSelector itemSelector = new ModernItemSelector(
@@ -398,7 +398,7 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         int animationDuration = ModernConfigSettings.getAnimationDurationMs();
         long currentTime = System.currentTimeMillis();
         float deltaTime = (currentTime - lastTime) / (float)animationDuration;
@@ -495,7 +495,7 @@ public class ConfigScreen extends Screen {
             int creditX = width / 2 - textWidth / 2;
             int creditY = baseY + currentContainer.getHeight() + 10;
             int creditColor = RenderUtil.applyAlpha(0xFFAAAAAA, easedProgress * 0.8f);
-            context.drawString(font, creditText, creditX, creditY, creditColor);
+            context.text(font, creditText, creditX, creditY, creditColor);
         }
     }
 

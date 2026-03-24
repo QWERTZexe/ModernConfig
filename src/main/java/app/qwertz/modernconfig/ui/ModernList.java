@@ -9,7 +9,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -90,12 +90,12 @@ public class ModernList {
         return drawHeader ? headerHeight + content : content;
     }
 
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         Minecraft mc = Minecraft.getInstance();
         int contentStart = drawHeader ? headerHeight : 0;
         if (drawHeader) {
             int headerColor = theme != null ? theme.getTextColor() : 0xFFFFFFFF;
-            context.drawString(mc.font, Component.literal(option.getDescription()), x, y + 2, headerColor, false);
+            context.text(mc.font, Component.literal(option.getDescription()), x, y + 2, headerColor, false);
         }
         for (int i = 0; i < inputs.size(); i++) {
             int inputY = y + contentStart + (padding / 2) + i * (itemHeight + padding);
@@ -126,7 +126,7 @@ public class ModernList {
         }
     }
 
-    private void drawDeleteIcon(GuiGraphics context, int x, int y, int color) {
+    private void drawDeleteIcon(GuiGraphicsExtractor context, int x, int y, int color) {
         // Draw dustbin/trash icon
         // Lid
         context.fill(x + 5, y + 3, x + 15, y + 5, color);
@@ -140,7 +140,7 @@ public class ModernList {
         context.fill(x + 12, y + 7, x + 13, y + 15, color);
     }
 
-    private void drawPlusIcon(GuiGraphics context, int x, int y, int color) {
+    private void drawPlusIcon(GuiGraphicsExtractor context, int x, int y, int color) {
         // Draw plus icon
         // Horizontal line
         context.fill(x + 5, y + 9, x + 15, y + 11, color);
