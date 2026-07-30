@@ -39,7 +39,7 @@ public class ModernConfig {
     }
 
     public void openScreen() {
-        Minecraft.getInstance().setScreen(new ConfigScreen(modId));
+        Minecraft.getInstance().gui.setScreen(new ConfigScreen(modId));
     }
 
     public ConfigScreen getScreen() {
@@ -94,7 +94,7 @@ public class ModernConfig {
     }
 
     public static void openGlobalConfig() {
-        Minecraft.getInstance().setScreen(new ConfigScreen());
+        Minecraft.getInstance().gui.setScreen(new ConfigScreen());
     }
 
     public static ConfigScreen getGlobalConfigScreen() {

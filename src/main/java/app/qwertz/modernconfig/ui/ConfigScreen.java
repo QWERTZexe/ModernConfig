@@ -145,11 +145,11 @@ public class ConfigScreen extends Screen {
                     Component.literal(description),
                     modInfo.getIcon(),
                     button -> {
-                        Screen screen = Minecraft.getInstance().screen;
+                        Screen screen = Minecraft.getInstance().gui.screen();
                         if (screen instanceof ConfigScreen configScreen) {
                             configScreen.navigateToMod(modIdToOpen);
                         } else {
-                            Minecraft.getInstance().setScreen(new ConfigScreen(modIdToOpen));
+                            Minecraft.getInstance().gui.setScreen(new ConfigScreen(modIdToOpen));
                         }
                     }
                 );
@@ -159,11 +159,11 @@ public class ConfigScreen extends Screen {
                     Component.literal(displayName),
                     Component.literal(description),
                     button -> {
-                        Screen screen = Minecraft.getInstance().screen;
+                        Screen screen = Minecraft.getInstance().gui.screen();
                         if (screen instanceof ConfigScreen configScreen) {
                             configScreen.navigateToMod(modIdToOpen);
                         } else {
-                            Minecraft.getInstance().setScreen(new ConfigScreen(modIdToOpen));
+                            Minecraft.getInstance().gui.setScreen(new ConfigScreen(modIdToOpen));
                         }
                     }
                 );
