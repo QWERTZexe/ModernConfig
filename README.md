@@ -237,11 +237,16 @@ List<String> whitelist = (List<String>) whitelistOption.getValue();
 
 ## 🌟 Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=QWERTZexe/ModernConfig&type=Date)](https://star-history.com/#QWERTZexe/ModernConfig&Date)
+<a href="https://www.star-history.com/?repos=QWERTZexe%2FModernConfig&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=QWERTZexe/ModernConfig&type=date&theme=dark&legend=top-left&sealed_token=QCR5PEznFs36dT4efFP43A8hlHTK8kJD1-WaRrIqP3sK1MR-KEBEko7i2gwt0hOv6aVgSXr8ipcTkDbCYcuQlFQ3o3-wspmlz_xCtrn08HVnSM3MkOEjCjiTHqul8-2qC1tflrs2Js37IdXqKdA8BlwOz2o25p6nxy-Bx_QYCnMXkapdZ-mrGNd8pDWU" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=QWERTZexe/ModernConfig&type=date&legend=top-left&sealed_token=QCR5PEznFs36dT4efFP43A8hlHTK8kJD1-WaRrIqP3sK1MR-KEBEko7i2gwt0hOv6aVgSXr8ipcTkDbCYcuQlFQ3o3-wspmlz_xCtrn08HVnSM3MkOEjCjiTHqul8-2qC1tflrs2Js37IdXqKdA8BlwOz2o25p6nxy-Bx_QYCnMXkapdZ-mrGNd8pDWU" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=QWERTZexe/ModernConfig&type=date&legend=top-left&sealed_token=QCR5PEznFs36dT4efFP43A8hlHTK8kJD1-WaRrIqP3sK1MR-KEBEko7i2gwt0hOv6aVgSXr8ipcTkDbCYcuQlFQ3o3-wspmlz_xCtrn08HVnSM3MkOEjCjiTHqul8-2qC1tflrs2Js37IdXqKdA8BlwOz2o25p6nxy-Bx_QYCnMXkapdZ-mrGNd8pDWU" />
+ </picture>
+</a>
+<div align="center">
 
 ---
-
-<div align="center">
 
 **Made with ❤️ and many tears 🥲**
 
