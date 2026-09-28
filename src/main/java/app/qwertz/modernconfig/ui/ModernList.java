@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import app.qwertz.modernconfig.config.ListConfigOption;
 import app.qwertz.modernconfig.config.ConfigManager;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
@@ -149,7 +150,7 @@ public class ModernList {
     }
 
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-        if (event.button() != 0) return false;
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT) return false;
         double mouseX = event.x();
         double mouseY = event.y();
 

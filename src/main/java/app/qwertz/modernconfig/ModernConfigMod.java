@@ -7,7 +7,6 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 import java.util.Arrays;
 
 public class ModernConfigMod implements ClientModInitializer {
@@ -16,11 +15,10 @@ public class ModernConfigMod implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Register keybind
+        // Register keybind (26.3+: SDL scancodes via InputConstants; KEYSYM -> KEYBOARD)
         configKeyBinding = KeyMappingHelper.registerKeyMapping(new KeyMapping(
             "key.modernconfig.open_config",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_RIGHT_SHIFT,
+            InputConstants.KEY_RSHIFT,
             KeyMapping.Category.register(Identifier.fromNamespaceAndPath("modernconfig", "general"))
         ));
 

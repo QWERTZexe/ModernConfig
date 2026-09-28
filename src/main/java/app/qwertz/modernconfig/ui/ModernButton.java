@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -71,7 +72,7 @@ public class ModernButton extends AbstractWidget {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-        if (event.button() == 0 && event.x() >= getX() && event.x() <= getX() + getWidth() &&
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && event.x() >= getX() && event.x() <= getX() + getWidth() &&
             event.y() >= getY() && event.y() <= getY() + getHeight()) {
             onClick.run();
             return true;

@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import app.qwertz.modernconfig.config.ConfigOption;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
@@ -65,7 +66,7 @@ public class ModernCategory extends AbstractWidget {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-        if (event.button() == 0 && event.x() >= getX() && event.x() <= getX() + width &&
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && event.x() >= getX() && event.x() <= getX() + width &&
             event.y() >= getY() && event.y() <= getY() + height) {
             onClick.accept(this);
             return true;

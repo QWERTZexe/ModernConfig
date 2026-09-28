@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.awt.*;
@@ -310,7 +311,7 @@ public class ModernColorPicker extends AbstractWidget {
     
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-        if (event.button() == 0) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             double mouseX = event.x();
             double mouseY = event.y();
             int swatchX = getX();
@@ -382,7 +383,7 @@ public class ModernColorPicker extends AbstractWidget {
     
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() == 0 && (isDragging || isDraggingHue)) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && (isDragging || isDraggingHue)) {
             isDragging = false;
             isDraggingHue = false;
             if (onColorComplete != null) {
@@ -395,11 +396,11 @@ public class ModernColorPicker extends AbstractWidget {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double offsetX, double offsetY) {
-        if (event.button() == 0 && isDragging) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && isDragging) {
             updateSaturationBrightness(event.x(), event.y());
             return true;
         }
-        if (event.button() == 0 && isDraggingHue) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && isDraggingHue) {
             updateHue(event.y());
             return true;
         }

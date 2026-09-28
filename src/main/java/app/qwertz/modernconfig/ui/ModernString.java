@@ -1,5 +1,6 @@
 package app.qwertz.modernconfig.ui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import app.qwertz.modernconfig.config.ModernConfigSettings;
 import app.qwertz.modernconfig.theme.ModernConfigTheme;
 import java.util.function.Consumer;
@@ -190,7 +191,7 @@ public class ModernString extends AbstractWidget {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
         double mouseX = event.x();
         double mouseY = event.y();
-        if (event.button() == 0 && mouseX >= getX() && mouseX <= getX() + getWidth() &&
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && mouseX >= getX() && mouseX <= getX() + getWidth() &&
             mouseY >= getY() && mouseY <= getY() + getHeight()) {
             applyClickFocusAndCursor(mouseX, mouseY);
             return true;
