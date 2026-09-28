@@ -6,9 +6,9 @@
 **A beautiful, modern configuration library for Minecraft mods**
 
 [![License](https://img.shields.io/badge/License-ARR-blue.svg)](LICENSE)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.6+-brightgreen.svg)](https://minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.3-brightgreen.svg)](https://minecraft.net)
 [![Mod Loader](https://img.shields.io/badge/Mod%20Loader-Fabric-orange.svg)](https://fabricmc.net)
-[![Version](https://img.shields.io/badge/Version-1.4-yellow.svg)](https://modrinth.com/mod/modernconfig)
+[![Version](https://img.shields.io/badge/Version-1.5-yellow.svg)](https://modrinth.com/mod/modernconfig)
 
 </div>
 
@@ -84,7 +84,7 @@ repositories {
 }
 
 dependencies {
-    modImplementation 'app.qwertz:modernconfig:1.0'
+    modImplementation 'app.qwertz:modernconfig:1.5'
 }
 ```
 
